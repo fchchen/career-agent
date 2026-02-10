@@ -1,0 +1,44 @@
+using CareerAgent.Api.Services;
+using CareerAgent.Shared.DTOs;
+using CareerAgent.Shared.Models;
+
+namespace CareerAgent.Api.Endpoints;
+
+public static class DashboardEndpoints
+{
+    public static IEndpointRouteBuilder MapDashboardEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/dashboard")
+            .WithTags("Dashboard");
+
+        group.MapGet("/", GetDashboard)
+            .Produces<DashboardResponse>();
+
+        return app;
+    }
+
+    private static async Task<IResult> GetDashboard(IStorageService storageService)
+    {
+        var totalJobs = await storageService.GetJobCountAsync();
+        var newJobs = await storageService.GetJobCountAsync(JobStatus.New);
+        var appliedJobs = await storageService.GetJobCountAsync(JobStatus.Applied);
+        var dismissedJobs = await storageService.GetJobCountAsync(JobStatus.Dismissed);
+        var avgScore = await storageService.GetAverageScoreAsync();
+
+        var topJobs = await storageService.GetJobsAsync(1, 5, null, "score");
+        var recentJobs = await storageService.GetJobsAsync(1, 5, null, "date");
+
+        var stats = new DashboardStats(totalJobs, newJobs, appliedJobs, dismissedJobs, Math.Round(avgScore, 4));
+
+        return Results.Ok(new DashboardResponse(
+            stats,
+            topJobs.Select(MapToDto).ToList(),
+            recentJobs.Select(MapToDto).ToList()
+        ));
+    }
+
+    private static JobListingDto MapToDto(JobListing j) => new(
+        j.Id, j.ExternalId, j.Source, j.Title, j.Company, j.Location,
+        j.Description, j.Url, j.Salary, j.RelevanceScore,
+        j.MatchedSkills, j.MissingSkills, j.Status, j.PostedAt, j.FetchedAt);
+}

@@ -1,0 +1,17 @@
+<mat-toolbar color="primary">
+  <mat-icon>work</mat-icon>
+  <span class="app-title">Career Agent</span>
+
+  <nav class="nav-links">
+    <a mat-button routerLink="/dashboard" routerLinkActive="active">
+      <mat-icon>dashboard</mat-icon> Dashboard
+    </a>
+    <a mat-button routerLink="/jobs" routerLinkActive="active">
+      <mat-icon>search</mat-icon> Jobs
+    </a>
+  </nav>
+</mat-toolbar>
+
+<main>
+  <router-outlet />
+</main>
