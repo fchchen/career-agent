@@ -12,6 +12,7 @@ public class JobSearchService : IJobSearchService
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         PropertyNameCaseInsensitive = true
     };
 

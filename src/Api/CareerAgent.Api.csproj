@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>CareerAgent.Api</RootNamespace>
+    <UserSecretsId>0f0285ef-1847-4b3a-9a7b-f22a9ee32d27</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

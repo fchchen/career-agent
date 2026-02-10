@@ -8,14 +8,14 @@ using Xunit;
 
 namespace CareerAgent.Api.Tests.Services;
 
-public class ClaudeApiServiceTests
+public class GeminiLlmServiceTests
 {
     // ==================== Prompt Building ====================
 
     [Fact]
     public void BuildPrompt_IncludesAllSections()
     {
-        var prompt = ClaudeApiService.BuildPrompt(
+        var prompt = GeminiLlmService.BuildPrompt(
             "# John Doe\nSoftware Engineer",
             "Looking for C# and .NET experience",
             "Senior Software Engineer",
@@ -53,7 +53,7 @@ public class ClaudeApiServiceTests
             ---COVER_LETTER_END---
             """;
 
-        var (resume, coverLetter) = ClaudeApiService.ParseResponse(response);
+        var (resume, coverLetter) = GeminiLlmService.ParseResponse(response);
 
         resume.Should().Contain("John Doe");
         resume.Should().Contain("10 years experience");
@@ -66,7 +66,7 @@ public class ClaudeApiServiceTests
     {
         var response = "# John Doe\n## Engineer\n- Experienced developer";
 
-        var (resume, coverLetter) = ClaudeApiService.ParseResponse(response);
+        var (resume, coverLetter) = GeminiLlmService.ParseResponse(response);
 
         resume.Should().Contain("John Doe");
         coverLetter.Should().BeEmpty();
@@ -81,7 +81,7 @@ public class ClaudeApiServiceTests
             ---RESUME_END---
             """;
 
-        var (resume, coverLetter) = ClaudeApiService.ParseResponse(response);
+        var (resume, coverLetter) = GeminiLlmService.ParseResponse(response);
 
         resume.Should().Contain("Resume content here");
         coverLetter.Should().BeEmpty();
@@ -92,36 +92,41 @@ public class ClaudeApiServiceTests
     [Fact]
     public async Task TailorResumeAsync_SendsCorrectRequest_ParsesResponse()
     {
-        var claudeResponse = new ClaudeResponse
+        var geminiResponse = new GeminiResponse
         {
-            Id = "msg_123",
-            Model = "claude-sonnet-4-5-20250929",
-            Content =
+            Candidates =
             [
-                new ClaudeContentBlock
+                new GeminiCandidate
                 {
-                    Type = "text",
-                    Text = """
-                        ---RESUME_START---
-                        # Tailored Resume
-                        ## Senior .NET Developer
-                        - Built microservices with C# and .NET 8
-                        ---RESUME_END---
+                    Content = new GeminiContent
+                    {
+                        Parts =
+                        [
+                            new GeminiPart
+                            {
+                                Text = """
+                                    ---RESUME_START---
+                                    # Tailored Resume
+                                    ## Senior .NET Developer
+                                    - Built microservices with C# and .NET 8
+                                    ---RESUME_END---
 
-                        ---COVER_LETTER_START---
-                        Dear Hiring Manager,
+                                    ---COVER_LETTER_START---
+                                    Dear Hiring Manager,
 
-                        I am excited to apply for the Senior .NET Developer position at TechCo.
-                        ---COVER_LETTER_END---
-                        """
+                                    I am excited to apply for the Senior .NET Developer position at TechCo.
+                                    ---COVER_LETTER_END---
+                                    """
+                            }
+                        ]
+                    }
                 }
-            ],
-            Usage = new ClaudeUsage { InputTokens = 500, OutputTokens = 300 }
+            ]
         };
 
-        var json = JsonSerializer.Serialize(claudeResponse, new JsonSerializerOptions
+        var json = JsonSerializer.Serialize(geminiResponse, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
 
         var handler = new MockHttpMessageHandler(json, HttpStatusCode.OK);
@@ -130,15 +135,15 @@ public class ClaudeApiServiceTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Claude:ApiKey"] = "test-api-key",
-                ["Claude:Model"] = "claude-sonnet-4-5-20250929",
-                ["Claude:MaxTokens"] = "4096"
+                ["Gemini:ApiKey"] = "test-api-key",
+                ["Gemini:Models:0"] = "gemini-2.5-flash",
+                ["Gemini:MaxOutputTokens"] = "4096"
             })
             .Build();
 
-        var logger = NullLogger<ClaudeApiService>.Instance;
+        var logger = NullLogger<GeminiLlmService>.Instance;
 
-        var service = new ClaudeApiService(httpClient, config, logger);
+        var service = new GeminiLlmService(httpClient, config, logger);
 
         var result = await service.TailorResumeAsync(
             "# My Resume\n- C# developer",
@@ -152,10 +157,10 @@ public class ClaudeApiServiceTests
         result.FullPrompt.Should().NotBeNullOrEmpty();
         result.FullResponse.Should().NotBeNullOrEmpty();
 
-        // Verify correct headers were sent
+        // Verify API key is in URL query param (not headers)
         handler.LastRequest.Should().NotBeNull();
-        handler.LastRequest!.Headers.GetValues("x-api-key").Should().Contain("test-api-key");
-        handler.LastRequest.Headers.GetValues("anthropic-version").Should().Contain("2023-06-01");
+        handler.LastRequest!.RequestUri!.Query.Should().Contain("key=test-api-key");
+        handler.LastRequest.RequestUri.AbsolutePath.Should().Contain("gemini-2.5-flash");
     }
 
     [Fact]
@@ -165,13 +170,13 @@ public class ClaudeApiServiceTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Claude:ApiKey"] = ""
+                ["Gemini:ApiKey"] = ""
             })
             .Build();
 
-        var logger = NullLogger<ClaudeApiService>.Instance;
+        var logger = NullLogger<GeminiLlmService>.Instance;
 
-        var service = new ClaudeApiService(httpClient, config, logger);
+        var service = new GeminiLlmService(httpClient, config, logger);
 
         var act = () => service.TailorResumeAsync("resume", "desc", "title", "company");
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -182,20 +187,20 @@ public class ClaudeApiServiceTests
     public async Task TailorResumeAsync_ApiError_ThrowsHttpRequestException()
     {
         var handler = new MockHttpMessageHandler(
-            """{"error": {"type": "invalid_request_error", "message": "Invalid API key"}}""",
+            """{"error": {"code": 401, "message": "API key not valid"}}""",
             HttpStatusCode.Unauthorized);
         var httpClient = new HttpClient(handler);
 
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Claude:ApiKey"] = "bad-key"
+                ["Gemini:ApiKey"] = "bad-key"
             })
             .Build();
 
-        var logger = NullLogger<ClaudeApiService>.Instance;
+        var logger = NullLogger<GeminiLlmService>.Instance;
 
-        var service = new ClaudeApiService(httpClient, config, logger);
+        var service = new GeminiLlmService(httpClient, config, logger);
 
         var act = () => service.TailorResumeAsync("resume", "desc", "title", "company");
         await act.Should().ThrowAsync<HttpRequestException>();

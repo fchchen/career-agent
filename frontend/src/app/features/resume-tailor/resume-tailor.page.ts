@@ -43,7 +43,7 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
         @if (tailoring()) {
           <div class="tailoring-status">
             <mat-spinner diameter="32" />
-            <span>Claude is tailoring your resume... This may take 15-30 seconds.</span>
+            <span>AI is tailoring your resume... This may take 15-30 seconds.</span>
           </div>
         }
 
@@ -183,7 +183,7 @@ export class ResumeTailorPage implements OnInit {
         this.tailoring.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.message ?? 'Failed to tailor resume. Is your Claude API key configured?');
+        this.error.set(err.error?.message ?? 'Failed to tailor resume. Is your Gemini API key configured?');
         this.tailoring.set(false);
       },
     });

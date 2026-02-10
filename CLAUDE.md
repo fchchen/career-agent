@@ -39,7 +39,7 @@ AI-powered job search and resume tailoring agent:
 ## External APIs
 
 1. **SerpAPI** - Google Jobs aggregator (LinkedIn, Indeed, Glassdoor)
-2. **Claude API** - Raw HttpClient to `POST /v1/messages` for resume tailoring
+2. **Gemini API** - Raw HttpClient to Google Gemini `generateContent` endpoint for resume tailoring (free tier)
 
 ## Key Integration Points
 
@@ -61,5 +61,5 @@ API keys via `dotnet user-secrets`:
 ```bash
 dotnet user-secrets init --project src/Api
 dotnet user-secrets set "SerpApi:ApiKey" "your-key" --project src/Api
-dotnet user-secrets set "Claude:ApiKey" "your-key" --project src/Api
+dotnet user-secrets set "Gemini:ApiKey" "your-key" --project src/Api
 ```

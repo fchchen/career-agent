@@ -10,13 +10,13 @@ namespace CareerAgent.Api.Tests.Services;
 public class ResumeServiceTests
 {
     private readonly Mock<IStorageService> _storageMock = new();
-    private readonly Mock<IClaudeApiService> _claudeMock = new();
+    private readonly Mock<ILlmService> _llmMock = new();
     private readonly Mock<IPdfService> _pdfMock = new();
     private readonly ResumeService _sut;
 
     public ResumeServiceTests()
     {
-        _sut = new ResumeService(_storageMock.Object, _claudeMock.Object, _pdfMock.Object, NullLogger<ResumeService>.Instance);
+        _sut = new ResumeService(_storageMock.Object, _llmMock.Object, _pdfMock.Object, NullLogger<ResumeService>.Instance);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class ResumeServiceTests
         _storageMock.Setup(s => s.SaveTailoredDocumentAsync(It.IsAny<TailoredDocument>()))
             .ReturnsAsync((TailoredDocument d) => { d.Id = 42; return d; });
 
-        _claudeMock.Setup(c => c.TailorResumeAsync(
+        _llmMock.Setup(c => c.TailorResumeAsync(
             resume.RawMarkdown, job.Description, job.Title, job.Company))
             .ReturnsAsync(new TailorResponse(
                 "# Tailored Resume",
@@ -59,8 +59,8 @@ public class ResumeServiceTests
         result.MasterResumeId.Should().Be(1);
         result.TailoredResumeMarkdown.Should().Contain("Tailored Resume");
         result.CoverLetterMarkdown.Should().Contain("Dear Hiring Manager");
-        result.ClaudePrompt.Should().Be("prompt");
-        result.ClaudeResponse.Should().Be("response");
+        result.LlmPrompt.Should().Be("prompt");
+        result.LlmResponse.Should().Be("response");
 
         _storageMock.Verify(s => s.SaveTailoredDocumentAsync(It.IsAny<TailoredDocument>()), Times.Once);
     }
@@ -108,7 +108,7 @@ public class ResumeServiceTests
         _storageMock.Setup(s => s.SaveTailoredDocumentAsync(It.IsAny<TailoredDocument>()))
             .ReturnsAsync((TailoredDocument d) => { d.Id = 1; return d; });
 
-        _claudeMock.Setup(c => c.TailorResumeAsync(
+        _llmMock.Setup(c => c.TailorResumeAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new TailorResponse("resume", "cover", "p", "r"));
 
@@ -133,7 +133,7 @@ public class ResumeServiceTests
         _storageMock.Setup(s => s.SaveTailoredDocumentAsync(It.IsAny<TailoredDocument>()))
             .ReturnsAsync((TailoredDocument d) => { d.Id = 1; return d; });
 
-        _claudeMock.Setup(c => c.TailorResumeAsync(
+        _llmMock.Setup(c => c.TailorResumeAsync(
             "# Specific Resume", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new TailorResponse("r", "c", "p", "resp"));
 
@@ -143,6 +143,6 @@ public class ResumeServiceTests
         var result = await _sut.TailorForJobAsync(1, masterResumeId: 5);
 
         result.MasterResumeId.Should().Be(5);
-        _claudeMock.Verify(c => c.TailorResumeAsync("# Specific Resume", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _llmMock.Verify(c => c.TailorResumeAsync("# Specific Resume", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 }

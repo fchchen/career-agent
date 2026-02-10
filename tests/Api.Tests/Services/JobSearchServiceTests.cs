@@ -139,7 +139,7 @@ public class JobSearchServiceTests
 
         var json = JsonSerializer.Serialize(serpResponse, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         });
 
         var handler = new MockHttpMessageHandler(json, HttpStatusCode.OK);
@@ -189,7 +189,7 @@ public class JobSearchServiceTests
         var serpResponse = new SerpApiResponse { JobsResults = [] };
         var json = JsonSerializer.Serialize(serpResponse, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         });
 
         var handler = new MockHttpMessageHandler(json, HttpStatusCode.OK);

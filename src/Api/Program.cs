@@ -30,7 +30,7 @@ else
 
 // Register HttpClient for external API calls
 builder.Services.AddHttpClient<IJobSearchService, JobSearchService>();
-builder.Services.AddHttpClient<IClaudeApiService, ClaudeApiService>();
+builder.Services.AddHttpClient<ILlmService, GeminiLlmService>();
 
 // Register services
 builder.Services.AddSingleton<IJobScoringService, JobScoringService>();

@@ -5,18 +5,18 @@ namespace CareerAgent.Api.Services;
 public class ResumeService : IResumeService
 {
     private readonly IStorageService _storageService;
-    private readonly IClaudeApiService _claudeService;
+    private readonly ILlmService _llmService;
     private readonly IPdfService _pdfService;
     private readonly ILogger<ResumeService> _logger;
 
     public ResumeService(
         IStorageService storageService,
-        IClaudeApiService claudeService,
+        ILlmService llmService,
         IPdfService pdfService,
         ILogger<ResumeService> logger)
     {
         _storageService = storageService;
-        _claudeService = claudeService;
+        _llmService = llmService;
         _pdfService = pdfService;
         _logger = logger;
     }
@@ -31,7 +31,7 @@ public class ResumeService : IResumeService
 
         _logger.LogInformation("Tailoring resume for job {JobId}: {Title} at {Company}", jobId, job.Title, job.Company);
 
-        var tailorResult = await _claudeService.TailorResumeAsync(
+        var tailorResult = await _llmService.TailorResumeAsync(
             resume.RawMarkdown, job.Description, job.Title, job.Company);
 
         // Generate PDF
@@ -60,8 +60,8 @@ public class ResumeService : IResumeService
             TailoredResumeMarkdown = tailorResult.TailoredResumeMarkdown,
             CoverLetterMarkdown = tailorResult.CoverLetterMarkdown,
             PdfPath = pdfPath,
-            ClaudePrompt = tailorResult.FullPrompt,
-            ClaudeResponse = tailorResult.FullResponse,
+            LlmPrompt = tailorResult.FullPrompt,
+            LlmResponse = tailorResult.FullResponse,
             CreatedAt = DateTime.UtcNow
         };
 

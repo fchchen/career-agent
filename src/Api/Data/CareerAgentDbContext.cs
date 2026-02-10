@@ -54,6 +54,8 @@ public class CareerAgentDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasOne(e => e.JobListing).WithMany().HasForeignKey(e => e.JobListingId);
             entity.HasOne(e => e.MasterResume).WithMany().HasForeignKey(e => e.MasterResumeId);
+            entity.Property(e => e.LlmPrompt).HasColumnName("ClaudePrompt");
+            entity.Property(e => e.LlmResponse).HasColumnName("ClaudeResponse");
         });
 
         modelBuilder.Entity<SearchProfile>(entity =>

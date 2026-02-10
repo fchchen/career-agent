@@ -10,7 +10,7 @@ public class TailoredDocument
     public string TailoredResumeMarkdown { get; set; } = string.Empty;
     public string CoverLetterMarkdown { get; set; } = string.Empty;
     public string? PdfPath { get; set; }
-    public string ClaudePrompt { get; set; } = string.Empty;
-    public string ClaudeResponse { get; set; } = string.Empty;
+    public string LlmPrompt { get; set; } = string.Empty;
+    public string LlmResponse { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
