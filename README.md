@@ -10,12 +10,12 @@ Overview with job stats, top scoring matches, and recently posted listings.
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ### Job Search
-Search and filter jobs by query, location, status, and relevance score.
+Search and filter jobs by query, location, status, and relevance score. Location filter shows remote jobs and/or jobs within a radius of your home address.
 
 ![Job Search](docs/screenshots/job-search.png)
 
 ### Job Detail
-Full job posting with skill match analysis (matched vs missing skills).
+Full job posting with skill match analysis and direct apply links (LinkedIn, Indeed, ZipRecruiter, etc.).
 
 ![Job Detail](docs/screenshots/job-detail.png)
 
@@ -27,6 +27,8 @@ AI-generated tailored resume and cover letter side-by-side with the job descript
 ## Features
 
 - **Job Search** — Searches Google Jobs via SerpAPI across LinkedIn, Indeed, Glassdoor, and more
+- **Location Filter** — Show remote jobs and/or jobs within a radius of your home address (geocoded via OpenStreetMap Nominatim)
+- **Direct Apply Links** — One-click apply buttons for LinkedIn, Indeed, ZipRecruiter, and other job boards
 - **Relevance Scoring** — Automatically scores and ranks jobs against your skills and experience
 - **Resume Tailoring** — AI rewrites your resume to match specific job descriptions using Google Gemini (free tier)
 - **Cover Letter Generation** — Generates targeted cover letters alongside each tailored resume
