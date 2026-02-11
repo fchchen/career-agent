@@ -10,13 +10,23 @@ public class JobListing
     public string Location { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
+    public List<ApplyLink> ApplyLinks { get; set; } = [];
     public string? Salary { get; set; }
     public double RelevanceScore { get; set; }
     public List<string> MatchedSkills { get; set; } = [];
     public List<string> MissingSkills { get; set; } = [];
     public JobStatus Status { get; set; } = JobStatus.New;
+    public bool IsRemote { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public DateTime PostedAt { get; set; }
     public DateTime FetchedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class ApplyLink
+{
+    public string Title { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
 }
 
 public enum JobStatus

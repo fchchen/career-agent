@@ -1,3 +1,4 @@
+using CareerAgent.Shared.DTOs;
 using CareerAgent.Shared.Models;
 
 namespace CareerAgent.Api.Services;
@@ -7,8 +8,8 @@ public interface IStorageService
     // Job Listings
     Task<JobListing?> GetJobByIdAsync(int id);
     Task<JobListing?> GetJobByExternalIdAsync(string externalId, string source);
-    Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null);
-    Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null);
+    Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null, LocationFilter? locationFilter = null);
+    Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null, LocationFilter? locationFilter = null);
     Task<JobListing> UpsertJobAsync(JobListing job);
     Task UpsertManyJobsAsync(IEnumerable<JobListing> jobs);
     Task UpdateJobStatusAsync(int id, JobStatus status);

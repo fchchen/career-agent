@@ -46,9 +46,17 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
           <button mat-raised-button color="primary" (click)="tailor()">
             <mat-icon>auto_fix_high</mat-icon> Tailor Resume
           </button>
-          <a mat-stroked-button [href]="j.url" target="_blank" rel="noopener">
-            <mat-icon>open_in_new</mat-icon> View Original
-          </a>
+          @if (j.applyLinks.length > 0) {
+            @for (link of j.applyLinks; track link.url) {
+              <a mat-stroked-button [href]="link.url" target="_blank" rel="noopener">
+                <mat-icon>open_in_new</mat-icon> {{ link.title }}
+              </a>
+            }
+          } @else {
+            <a mat-stroked-button [href]="j.url" target="_blank" rel="noopener">
+              <mat-icon>open_in_new</mat-icon> View Original
+            </a>
+          }
           <button mat-stroked-button [matMenuTriggerFor]="statusMenu">
             <mat-icon>label</mat-icon> {{ j.status }}
           </button>

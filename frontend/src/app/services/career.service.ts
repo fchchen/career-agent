@@ -4,10 +4,12 @@ import { Observable, of, map, shareReplay } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   DashboardResponse,
+  GeocodeResponse,
   JobListingDto,
   JobSearchRequest,
   JobStatus,
   JobStatusUpdateRequest,
+  LocationFilter,
   MasterResumeDto,
   MasterResumeUpdateRequest,
   PagedResponse,
@@ -47,7 +49,8 @@ export class CareerService {
     pageSize = 20,
     status?: JobStatus,
     sortBy?: string,
-    postedWithinHours?: number
+    postedWithinHours?: number,
+    locationFilter?: LocationFilter
   ): Observable<PagedResponse<JobListingDto>> {
     if (this.staticData) {
       return this.getCached<PagedResponse<JobListingDto>>(`${this.apiUrl}/jobs.json`).pipe(
@@ -79,7 +82,18 @@ export class CareerService {
     if (status) params = params.set('status', status);
     if (sortBy) params = params.set('sortBy', sortBy);
     if (postedWithinHours) params = params.set('postedWithinHours', postedWithinHours);
+    if (locationFilter) {
+      params = params
+        .set('homeLatitude', locationFilter.homeLatitude)
+        .set('homeLongitude', locationFilter.homeLongitude)
+        .set('radiusMiles', locationFilter.radiusMiles)
+        .set('includeRemote', locationFilter.includeRemote);
+    }
     return this.http.get<PagedResponse<JobListingDto>>(`${this.apiUrl}/jobs`, { params });
+  }
+
+  geocodeAddress(address: string): Observable<GeocodeResponse> {
+    return this.http.post<GeocodeResponse>(`${this.apiUrl}/jobs/geocode`, { address });
   }
 
   getJobById(id: number): Observable<JobListingDto> {

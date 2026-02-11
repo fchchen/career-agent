@@ -26,6 +26,10 @@ public static class JobSearchEndpoints
             .Produces(204)
             .Produces(404);
 
+        group.MapPost("/geocode", GeocodeAddress)
+            .Produces<GeocodeResponse>()
+            .Produces(404);
+
         return app;
     }
 
@@ -35,6 +39,10 @@ public static class JobSearchEndpoints
         [FromQuery] string? status,
         [FromQuery] string? sortBy,
         [FromQuery] int? postedWithinHours,
+        [FromQuery] double? homeLatitude,
+        [FromQuery] double? homeLongitude,
+        [FromQuery] double? radiusMiles,
+        [FromQuery] bool? includeRemote,
         IStorageService storageService)
     {
         page = page < 1 ? 1 : page;
@@ -44,8 +52,12 @@ public static class JobSearchEndpoints
         if (Enum.TryParse<JobStatus>(status, true, out var parsed))
             statusFilter = parsed;
 
-        var jobs = await storageService.GetJobsAsync(page, pageSize, statusFilter, sortBy, postedWithinHours);
-        var totalCount = await storageService.GetJobCountAsync(statusFilter, postedWithinHours);
+        LocationFilter? locationFilter = null;
+        if (homeLatitude.HasValue && homeLongitude.HasValue && radiusMiles.HasValue)
+            locationFilter = new LocationFilter(homeLatitude.Value, homeLongitude.Value, radiusMiles.Value, includeRemote ?? true);
+
+        var jobs = await storageService.GetJobsAsync(page, pageSize, statusFilter, sortBy, postedWithinHours, locationFilter);
+        var totalCount = await storageService.GetJobCountAsync(statusFilter, postedWithinHours, locationFilter);
 
         var dtos = jobs.Select(MapToDto).ToList();
         return Results.Ok(new PagedResponse<JobListingDto>(dtos, totalCount, page, pageSize));
@@ -86,8 +98,22 @@ public static class JobSearchEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> GeocodeAddress(
+        [FromBody] GeocodeRequest request,
+        IGeocodingService geocodingService)
+    {
+        var result = await geocodingService.GeocodeAsync(request.Address);
+        if (result is null)
+            return Results.NotFound(new { message = $"Could not geocode '{request.Address}'" });
+
+        return Results.Ok(new GeocodeResponse(result.Latitude, result.Longitude, result.DisplayName));
+    }
+
     private static JobListingDto MapToDto(JobListing j) => new(
         j.Id, j.ExternalId, j.Source, j.Title, j.Company, j.Location,
-        j.Description, j.Url, j.Salary, j.RelevanceScore,
-        j.MatchedSkills, j.MissingSkills, j.Status, j.PostedAt, j.FetchedAt);
+        j.Description, j.Url,
+        j.ApplyLinks.Select(a => new ApplyLinkDto(a.Title, a.Url)).ToList(),
+        j.Salary, j.RelevanceScore,
+        j.MatchedSkills, j.MissingSkills, j.Status, j.IsRemote, j.Latitude, j.Longitude,
+        j.PostedAt, j.FetchedAt);
 }

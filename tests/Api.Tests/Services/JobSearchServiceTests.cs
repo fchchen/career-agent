@@ -44,7 +44,10 @@ public class JobSearchServiceTests
         result.Company.Should().Be("Acme Corp");
         result.Location.Should().Be("Remote");
         result.Description.Should().Contain("C#");
-        result.Url.Should().Be("https://example.com/job/abc123");
+        result.Url.Should().Be("https://linkedin.com/jobs/123");
+        result.ApplyLinks.Should().HaveCount(1);
+        result.ApplyLinks[0].Title.Should().Be("Apply on LinkedIn");
+        result.ApplyLinks[0].Url.Should().Be("https://linkedin.com/jobs/123");
         result.Salary.Should().Be("$120K-$150K");
         result.PostedAt.Should().BeCloseTo(DateTime.UtcNow.AddDays(-3), TimeSpan.FromHours(1));
     }

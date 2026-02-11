@@ -39,6 +39,9 @@ public static class DashboardEndpoints
 
     private static JobListingDto MapToDto(JobListing j) => new(
         j.Id, j.ExternalId, j.Source, j.Title, j.Company, j.Location,
-        j.Description, j.Url, j.Salary, j.RelevanceScore,
-        j.MatchedSkills, j.MissingSkills, j.Status, j.PostedAt, j.FetchedAt);
+        j.Description, j.Url,
+        j.ApplyLinks.Select(a => new ApplyLinkDto(a.Title, a.Url)).ToList(),
+        j.Salary, j.RelevanceScore,
+        j.MatchedSkills, j.MissingSkills, j.Status, j.IsRemote, j.Latitude, j.Longitude,
+        j.PostedAt, j.FetchedAt);
 }

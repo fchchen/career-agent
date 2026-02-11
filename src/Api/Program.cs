@@ -31,6 +31,7 @@ else
 // Register HttpClient for external API calls
 builder.Services.AddHttpClient<IJobSearchService, JobSearchService>();
 builder.Services.AddHttpClient<ILlmService, GeminiLlmService>();
+builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>();
 
 // Register services
 builder.Services.AddSingleton<IJobScoringService, JobScoringService>();
@@ -86,6 +87,7 @@ if (!app.Environment.IsDevelopment())
 app.MapJobSearchEndpoints();
 app.MapResumeEndpoints();
 app.MapDashboardEndpoints();
+app.MapAdminEndpoints();
 
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))

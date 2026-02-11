@@ -63,6 +63,13 @@ public class JobSearchService : IJobSearchService
     internal static JobListing MapToJobListing(SerpApiJob serpJob)
     {
         var postedAt = ParseRelativeDate(serpJob.DetectedExtensions?.PostedAt);
+        var location = serpJob.Location ?? string.Empty;
+        var description = serpJob.Description ?? string.Empty;
+
+        var applyLinks = serpJob.ApplyOptions?
+            .Where(o => !string.IsNullOrEmpty(o.Link))
+            .Select(o => new ApplyLink { Title = o.Title ?? "Apply", Url = o.Link! })
+            .ToList() ?? [];
 
         return new JobListing
         {
@@ -70,13 +77,30 @@ public class JobSearchService : IJobSearchService
             Source = "Google Jobs",
             Title = serpJob.Title ?? string.Empty,
             Company = serpJob.CompanyName ?? string.Empty,
-            Location = serpJob.Location ?? string.Empty,
-            Description = serpJob.Description ?? string.Empty,
-            Url = serpJob.ShareLink ?? serpJob.ApplyOptions?.FirstOrDefault()?.Link ?? string.Empty,
+            Location = location,
+            Description = description,
+            Url = applyLinks.FirstOrDefault()?.Url ?? serpJob.ShareLink ?? string.Empty,
+            ApplyLinks = applyLinks,
             Salary = serpJob.DetectedExtensions?.Salary,
+            IsRemote = ClassifyRemote(location, description),
             PostedAt = postedAt,
             FetchedAt = DateTime.UtcNow
         };
+    }
+
+    internal static bool ClassifyRemote(string location, string description)
+    {
+        var loc = location.ToLowerInvariant();
+        var desc = description.ToLowerInvariant();
+
+        // Location-based signals
+        if (loc.Contains("remote") || loc == "anywhere" || loc == "united states"
+            || loc.Contains("work from home") || loc == "us" || loc == "usa")
+            return true;
+
+        // Description-based signals (only strong indicators)
+        var remotePatterns = new[] { "remote position", "fully remote", "100% remote", "work remotely", "remote role", "remote opportunity" };
+        return remotePatterns.Any(p => desc.Contains(p));
     }
 
     internal static DateTime ParseRelativeDate(string? relativeDate)

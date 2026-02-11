@@ -1,4 +1,5 @@
 using CareerAgent.Api.Data;
+using CareerAgent.Shared.DTOs;
 using CareerAgent.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,7 @@ public class SqliteStorageService : IStorageService
     public async Task<JobListing?> GetJobByExternalIdAsync(string externalId, string source)
         => await _db.JobListings.FirstOrDefaultAsync(j => j.ExternalId == externalId && j.Source == source);
 
-    public async Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null)
+    public async Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null, LocationFilter? locationFilter = null)
     {
         var query = _db.JobListings.AsQueryable();
 
@@ -38,10 +39,18 @@ public class SqliteStorageService : IStorageService
             _ => query.OrderByDescending(j => j.RelevanceScore)
         };
 
+        if (locationFilter is not null)
+        {
+            // Load all matching jobs, then apply location filter in-memory (dataset is small)
+            var all = await query.ToListAsync();
+            var filtered = ApplyLocationFilter(all, locationFilter);
+            return filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        }
+
         return await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
     }
 
-    public async Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null)
+    public async Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null, LocationFilter? locationFilter = null)
     {
         var query = _db.JobListings.AsQueryable();
 
@@ -54,7 +63,32 @@ public class SqliteStorageService : IStorageService
             query = query.Where(j => j.PostedAt >= cutoff);
         }
 
+        if (locationFilter is not null)
+        {
+            var all = await query.ToListAsync();
+            return ApplyLocationFilter(all, locationFilter).Count;
+        }
+
         return await query.CountAsync();
+    }
+
+    private static List<JobListing> ApplyLocationFilter(List<JobListing> jobs, LocationFilter filter)
+    {
+        return jobs.Where(j =>
+        {
+            if (filter.IncludeRemote && j.IsRemote)
+                return true;
+
+            if (j.Latitude.HasValue && j.Longitude.HasValue)
+            {
+                var distance = GeoMath.HaversineDistanceMiles(
+                    filter.HomeLatitude, filter.HomeLongitude,
+                    j.Latitude.Value, j.Longitude.Value);
+                return distance <= filter.RadiusMiles;
+            }
+
+            return false;
+        }).ToList();
     }
 
     public async Task<JobListing> UpsertJobAsync(JobListing job)
@@ -69,10 +103,14 @@ public class SqliteStorageService : IStorageService
             existing.Location = job.Location;
             existing.Description = job.Description;
             existing.Url = job.Url;
+            existing.ApplyLinks = job.ApplyLinks;
             existing.Salary = job.Salary;
             existing.RelevanceScore = job.RelevanceScore;
             existing.MatchedSkills = job.MatchedSkills;
             existing.MissingSkills = job.MissingSkills;
+            existing.IsRemote = job.IsRemote;
+            existing.Latitude = job.Latitude;
+            existing.Longitude = job.Longitude;
             existing.PostedAt = job.PostedAt;
             existing.FetchedAt = job.FetchedAt;
         }

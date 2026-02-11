@@ -7,13 +7,22 @@ export interface JobListingDto {
   location: string;
   description: string;
   url: string;
+  applyLinks: ApplyLink[];
   salary: string | null;
   relevanceScore: number;
   matchedSkills: string[];
   missingSkills: string[];
   status: JobStatus;
+  isRemote: boolean;
+  latitude: number | null;
+  longitude: number | null;
   postedAt: string;
   fetchedAt: string;
+}
+
+export interface ApplyLink {
+  title: string;
+  url: string;
 }
 
 export type JobStatus = 'New' | 'Viewed' | 'Applied' | 'Dismissed';
@@ -75,4 +84,17 @@ export interface TailorRequest {
 
 export interface JobStatusUpdateRequest {
   status: JobStatus;
+}
+
+export interface GeocodeResponse {
+  latitude: number;
+  longitude: number;
+  displayName: string;
+}
+
+export interface LocationFilter {
+  homeLatitude: number;
+  homeLongitude: number;
+  radiusMiles: number;
+  includeRemote: boolean;
 }

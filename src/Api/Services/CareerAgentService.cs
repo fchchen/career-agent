@@ -8,17 +8,20 @@ public class CareerAgentService : ICareerAgentService
     private readonly IJobSearchService _searchService;
     private readonly IJobScoringService _scoringService;
     private readonly IStorageService _storageService;
+    private readonly IGeocodingService _geocodingService;
     private readonly ILogger<CareerAgentService> _logger;
 
     public CareerAgentService(
         IJobSearchService searchService,
         IJobScoringService scoringService,
         IStorageService storageService,
+        IGeocodingService geocodingService,
         ILogger<CareerAgentService> logger)
     {
         _searchService = searchService;
         _scoringService = scoringService;
         _storageService = storageService;
+        _geocodingService = geocodingService;
         _logger = logger;
     }
 
@@ -41,6 +44,17 @@ public class CareerAgentService : ICareerAgentService
             job.RelevanceScore = scoreResult.Score;
             job.MatchedSkills = scoreResult.MatchedSkills;
             job.MissingSkills = scoreResult.MissingSkills;
+        }
+
+        // Geocode non-remote jobs
+        foreach (var job in jobs.Where(j => !j.IsRemote && !string.IsNullOrWhiteSpace(j.Location)))
+        {
+            var geo = await _geocodingService.GeocodeAsync(job.Location);
+            if (geo is not null)
+            {
+                job.Latitude = geo.Latitude;
+                job.Longitude = geo.Longitude;
+            }
         }
 
         // Sort by score descending

@@ -13,11 +13,12 @@ public class CareerAgentServiceTests
     private readonly Mock<IJobSearchService> _searchMock = new();
     private readonly Mock<IJobScoringService> _scoringMock = new();
     private readonly Mock<IStorageService> _storageMock = new();
+    private readonly Mock<IGeocodingService> _geocodingMock = new();
     private readonly CareerAgentService _sut;
 
     public CareerAgentServiceTests()
     {
-        _sut = new CareerAgentService(_searchMock.Object, _scoringMock.Object, _storageMock.Object, NullLogger<CareerAgentService>.Instance);
+        _sut = new CareerAgentService(_searchMock.Object, _scoringMock.Object, _storageMock.Object, _geocodingMock.Object, NullLogger<CareerAgentService>.Instance);
     }
 
     [Fact]

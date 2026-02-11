@@ -1,3 +1,4 @@
+using CareerAgent.Shared.DTOs;
 using CareerAgent.Shared.Models;
 
 namespace CareerAgent.Api.Services;
@@ -19,7 +20,7 @@ public class InMemoryStorageService : IStorageService
     public Task<JobListing?> GetJobByExternalIdAsync(string externalId, string source)
         => Task.FromResult(_jobs.FirstOrDefault(j => j.ExternalId == externalId && j.Source == source));
 
-    public Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null)
+    public Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null, LocationFilter? locationFilter = null)
     {
         var query = _jobs.AsEnumerable();
 
@@ -39,11 +40,14 @@ public class InMemoryStorageService : IStorageService
             _ => query.OrderByDescending(j => j.RelevanceScore)
         };
 
+        if (locationFilter is not null)
+            query = ApplyLocationFilter(query, locationFilter);
+
         var result = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         return Task.FromResult(result);
     }
 
-    public Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null)
+    public Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null, LocationFilter? locationFilter = null)
     {
         var query = _jobs.AsEnumerable();
 
@@ -56,7 +60,29 @@ public class InMemoryStorageService : IStorageService
             query = query.Where(j => j.PostedAt >= cutoff);
         }
 
+        if (locationFilter is not null)
+            query = ApplyLocationFilter(query, locationFilter);
+
         return Task.FromResult(query.Count());
+    }
+
+    private static IEnumerable<JobListing> ApplyLocationFilter(IEnumerable<JobListing> jobs, LocationFilter filter)
+    {
+        return jobs.Where(j =>
+        {
+            if (filter.IncludeRemote && j.IsRemote)
+                return true;
+
+            if (j.Latitude.HasValue && j.Longitude.HasValue)
+            {
+                var distance = GeoMath.HaversineDistanceMiles(
+                    filter.HomeLatitude, filter.HomeLongitude,
+                    j.Latitude.Value, j.Longitude.Value);
+                return distance <= filter.RadiusMiles;
+            }
+
+            return false;
+        });
     }
 
     public Task<JobListing> UpsertJobAsync(JobListing job)
@@ -69,10 +95,14 @@ public class InMemoryStorageService : IStorageService
             existing.Location = job.Location;
             existing.Description = job.Description;
             existing.Url = job.Url;
+            existing.ApplyLinks = job.ApplyLinks;
             existing.Salary = job.Salary;
             existing.RelevanceScore = job.RelevanceScore;
             existing.MatchedSkills = job.MatchedSkills;
             existing.MissingSkills = job.MissingSkills;
+            existing.IsRemote = job.IsRemote;
+            existing.Latitude = job.Latitude;
+            existing.Longitude = job.Longitude;
             existing.PostedAt = job.PostedAt;
             existing.FetchedAt = job.FetchedAt;
             return Task.FromResult(existing);

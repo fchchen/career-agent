@@ -22,6 +22,7 @@ public class CareerAgentDbContext : DbContext
             entity.HasIndex(e => new { e.ExternalId, e.Source }).IsUnique();
             entity.HasIndex(e => e.RelevanceScore);
             entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.IsRemote);
 
             var stringListComparer = new ValueComparer<List<string>>(
                 (c1, c2) => c1!.SequenceEqual(c2!),
@@ -39,6 +40,17 @@ public class CareerAgentDbContext : DbContext
                     v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                     v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>())
                 .Metadata.SetValueComparer(stringListComparer);
+
+            var applyLinkComparer = new ValueComparer<List<ApplyLink>>(
+                (c1, c2) => JsonSerializer.Serialize(c1, (JsonSerializerOptions?)null) == JsonSerializer.Serialize(c2, (JsonSerializerOptions?)null),
+                c => JsonSerializer.Serialize(c, (JsonSerializerOptions?)null).GetHashCode(),
+                c => JsonSerializer.Deserialize<List<ApplyLink>>(JsonSerializer.Serialize(c, (JsonSerializerOptions?)null), (JsonSerializerOptions?)null)!);
+
+            entity.Property(e => e.ApplyLinks)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => string.IsNullOrWhiteSpace(v) ? new List<ApplyLink>() : JsonSerializer.Deserialize<List<ApplyLink>>(v, (JsonSerializerOptions?)null) ?? new List<ApplyLink>())
+                .Metadata.SetValueComparer(applyLinkComparer);
 
             entity.Property(e => e.Status)
                 .HasConversion<string>();
