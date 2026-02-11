@@ -1,6 +1,6 @@
 # Career Agent
 
-AI-powered job search and resume tailoring tool. Aggregates job listings from Google Jobs, scores them against your profile, and uses Google Gemini to generate tailored resumes and cover letters.
+AI-powered job search and resume tailoring tool. Aggregates job listings from Google Jobs and Adzuna, scores them against your profile, and uses Google Gemini to generate tailored resumes and cover letters.
 
 ## Screenshots
 
@@ -26,10 +26,13 @@ AI-generated tailored resume and cover letter side-by-side with the job descript
 
 ## Features
 
-- **Job Search** — Searches Google Jobs via SerpAPI across LinkedIn, Indeed, Glassdoor, and more
+- **Multi-Source Job Search** — Aggregates jobs from Google Jobs (via SerpAPI) and Adzuna, with cross-source deduplication
+- **Background Job Fetching** — Automatically searches multiple queries on a 2-hour cycle for continuous coverage
 - **Location Filter** — Show remote jobs and/or jobs within a radius of your home address (geocoded via OpenStreetMap Nominatim)
 - **Direct Apply Links** — One-click apply buttons for LinkedIn, Indeed, ZipRecruiter, and other job boards
 - **Relevance Scoring** — Automatically scores and ranks jobs against your skills and experience
+- **Days-Old Badges** — Visual freshness indicators on job cards (Today, 1d, 2d, etc.)
+- **Resume Management** — View and edit your master resume directly in the browser
 - **Resume Tailoring** — AI rewrites your resume to match specific job descriptions using Google Gemini (free tier)
 - **Cover Letter Generation** — Generates targeted cover letters alongside each tailored resume
 - **PDF Export** — Download tailored resumes as PDF
@@ -40,7 +43,7 @@ AI-generated tailored resume and cover letter side-by-side with the job descript
 - **Backend**: ASP.NET Core 8 Minimal API, EF Core, SQLite
 - **Frontend**: Angular 21, Angular Material
 - **AI**: Google Gemini API (free tier — gemini-2.5-flash, gemini-2.5-flash-lite, gemini-3-flash)
-- **Job Data**: SerpAPI (Google Jobs aggregator)
+- **Job Data**: SerpAPI (Google Jobs aggregator), Adzuna API
 - **Testing**: xUnit, Moq, FluentAssertions
 
 ## Getting Started
@@ -50,6 +53,7 @@ AI-generated tailored resume and cover letter side-by-side with the job descript
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js 20+](https://nodejs.org/)
 - [SerpAPI key](https://serpapi.com/) (free tier available)
+- [Adzuna API credentials](https://developer.adzuna.com/) (free tier available)
 - [Google Gemini API key](https://aistudio.google.com/apikey) (free tier)
 
 ### Setup
@@ -63,6 +67,8 @@ dotnet build
 # Configure API keys
 dotnet user-secrets init --project src/Api
 dotnet user-secrets set "SerpApi:ApiKey" "your-serp-key" --project src/Api
+dotnet user-secrets set "Adzuna:AppId" "your-adzuna-app-id" --project src/Api
+dotnet user-secrets set "Adzuna:AppKey" "your-adzuna-app-key" --project src/Api
 dotnet user-secrets set "Gemini:ApiKey" "your-gemini-key" --project src/Api
 
 # Install frontend dependencies
@@ -93,7 +99,7 @@ dotnet test
 src/
   Api/                  ASP.NET Core 8 Minimal API
     Endpoints/          Route handlers (JobSearch, Resume, Dashboard)
-    Services/           Business logic with interface abstractions
+    Services/           Business logic (composite job search, scoring, remote classification)
     Data/               EF Core DbContext + SQLite
     Middleware/          Global exception handling
   Shared/               Models, DTOs, constants
