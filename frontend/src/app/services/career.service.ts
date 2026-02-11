@@ -13,6 +13,8 @@ import {
   MasterResumeDto,
   MasterResumeUpdateRequest,
   PagedResponse,
+  SearchProfileDto,
+  SearchProfileUpdateRequest,
   TailoredDocumentDto,
   TailorRequest,
 } from '../models/career.models';
@@ -147,5 +149,29 @@ export class CareerService {
 
   getPdfDownloadUrl(tailoredId: number): string {
     return `${this.apiUrl}/resume/tailored/${tailoredId}/pdf`;
+  }
+
+  // Profile
+  getProfile(): Observable<SearchProfileDto> {
+    if (this.staticData) {
+      return of({
+        id: 1,
+        name: 'Default',
+        query: 'Senior Software Engineer .NET Angular',
+        location: 'Rochester Hills, MI 48307',
+        radiusMiles: 50,
+        remoteOnly: false,
+        requiredSkills: ['.NET', 'C#', 'Angular', 'TypeScript', 'SQL Server', 'Azure', 'AWS'],
+        preferredSkills: ['REST API', 'Entity Framework', 'Git', 'CI/CD', 'Agile', 'JavaScript', 'HTML/CSS', 'Docker', 'Azure DevOps'],
+        titleKeywords: ['Senior Software Engineer', 'Senior Software Developer', 'Senior Full Stack Developer', 'Senior .NET Developer', 'Senior Backend Engineer', 'Staff Software Engineer', 'Lead Software Engineer', 'Principal Software Engineer'],
+        negativeTitleKeywords: ['Junior', 'Intern', 'Entry Level', 'Associate', 'Data Scientist', 'Machine Learning', 'DevOps', 'SRE', 'QA', 'Test Engineer', 'Security Engineer'],
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return this.http.get<SearchProfileDto>(`${this.apiUrl}/profile`);
+  }
+
+  updateProfile(request: SearchProfileUpdateRequest): Observable<SearchProfileDto> {
+    return this.http.put<SearchProfileDto>(`${this.apiUrl}/profile`, request);
   }
 }

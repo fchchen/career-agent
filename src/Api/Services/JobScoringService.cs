@@ -13,8 +13,8 @@ public class JobScoringService : IJobScoringService
 
     public JobScoreResult ScoreJob(JobListing job, SearchProfile? profile = null)
     {
-        var titleScore = ScoreTitle(job.Title);
-        var (skillScore, matched, missing) = ScoreSkills(job.Description, job.Title);
+        var titleScore = ScoreTitle(job.Title, profile);
+        var (skillScore, matched, missing) = ScoreSkills(job.Description, job.Title, profile);
         var locationScore = ScoreLocation(job.Location, profile);
         var recencyScore = ScoreRecency(job.PostedAt);
 
@@ -24,7 +24,7 @@ public class JobScoringService : IJobScoringService
                        + (recencyScore * RecencyWeight);
 
         // Apply negative keyword penalty
-        if (HasNegativeKeywords(job.Title))
+        if (HasNegativeKeywords(job.Title, profile))
             finalScore *= 0.3;
 
         finalScore = Math.Clamp(finalScore, 0, 1);
@@ -45,18 +45,23 @@ public class JobScoringService : IJobScoringService
         );
     }
 
-    internal static double ScoreTitle(string title)
+    internal static double ScoreTitle(string title, SearchProfile? profile = null)
     {
         var lowerTitle = title.ToLowerInvariant();
 
+        // Resolve effective title keywords from profile or defaults
+        var titleKeywords = profile?.TitleKeywords is { Count: > 0 }
+            ? profile.TitleKeywords
+            : SearchDefaults.DefaultTitleKeywords;
+
         // Check for exact/close matches with preferred titles
-        foreach (var keyword in SearchDefaults.DefaultTitleKeywords)
+        foreach (var keyword in titleKeywords)
         {
             if (lowerTitle.Contains(keyword.ToLowerInvariant()))
                 return 1.0;
         }
 
-        // Partial matches
+        // Partial matches (fallback heuristics)
         var score = 0.0;
 
         if (lowerTitle.Contains("senior")) score += 0.4;
@@ -72,7 +77,8 @@ public class JobScoringService : IJobScoringService
         return Math.Min(score, 1.0);
     }
 
-    internal static (double Score, List<string> Matched, List<string> Missing) ScoreSkills(string description, string title)
+    internal static (double Score, List<string> Matched, List<string> Missing) ScoreSkills(
+        string description, string title, SearchProfile? profile = null)
     {
         var combinedText = $"{title} {description}";
         var foundSkills = SkillTaxonomy.ExtractSkills(combinedText);
@@ -80,19 +86,26 @@ public class JobScoringService : IJobScoringService
         var matched = new List<string>();
         var missing = new List<string>();
 
+        // Resolve core and strong skills from profile or defaults
+        var coreSkills = profile?.RequiredSkills is { Count: > 0 }
+            ? profile.RequiredSkills
+            : SkillTaxonomy.CoreSkills;
+
+        var strongSkills = profile?.PreferredSkills is { Count: > 0 }
+            ? profile.PreferredSkills
+            : SkillTaxonomy.StrongSkills;
+
         double weightedScore = 0;
         double maxWeight = 0;
 
-        // Score against all tracked skills
-        foreach (var skill in SkillTaxonomy.CoreSkills.Concat(SkillTaxonomy.StrongSkills))
+        // Score against core skills (weight 1.0) and strong skills (weight 0.6)
+        foreach (var skill in coreSkills)
         {
-            var weight = SkillTaxonomy.GetSkillWeight(skill);
-            maxWeight += weight;
-
+            maxWeight += 1.0;
             if (foundSkills.Contains(skill))
             {
                 matched.Add(skill);
-                weightedScore += weight;
+                weightedScore += 1.0;
             }
             else
             {
@@ -100,9 +113,28 @@ public class JobScoringService : IJobScoringService
             }
         }
 
-        // Bonus skills only add, never penalize
+        foreach (var skill in strongSkills)
+        {
+            // Skip if already counted as a core skill
+            if (coreSkills.Contains(skill)) continue;
+
+            maxWeight += 0.6;
+            if (foundSkills.Contains(skill))
+            {
+                matched.Add(skill);
+                weightedScore += 0.6;
+            }
+            else
+            {
+                missing.Add(skill);
+            }
+        }
+
+        // Bonus skills: everything in BonusSkills that isn't already core/strong
+        var profileSkillSet = new HashSet<string>(coreSkills.Concat(strongSkills), StringComparer.OrdinalIgnoreCase);
         foreach (var skill in SkillTaxonomy.BonusSkills)
         {
+            if (profileSkillSet.Contains(skill)) continue;
             if (foundSkills.Contains(skill))
             {
                 matched.Add(skill);
@@ -155,9 +187,14 @@ public class JobScoringService : IJobScoringService
         };
     }
 
-    internal static bool HasNegativeKeywords(string title)
+    internal static bool HasNegativeKeywords(string title, SearchProfile? profile = null)
     {
         var lowerTitle = title.ToLowerInvariant();
-        return SearchDefaults.NegativeTitleKeywords.Any(k => lowerTitle.Contains(k.ToLowerInvariant()));
+
+        var negativeKeywords = profile?.NegativeTitleKeywords is { Count: > 0 }
+            ? profile.NegativeTitleKeywords
+            : SearchDefaults.NegativeTitleKeywords;
+
+        return negativeKeywords.Any(k => lowerTitle.Contains(k.ToLowerInvariant()));
     }
 }

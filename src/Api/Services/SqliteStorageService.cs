@@ -203,6 +203,8 @@ public class SqliteStorageService : IStorageService
             existing.RemoteOnly = profile.RemoteOnly;
             existing.RequiredSkills = profile.RequiredSkills;
             existing.PreferredSkills = profile.PreferredSkills;
+            existing.TitleKeywords = profile.TitleKeywords;
+            existing.NegativeTitleKeywords = profile.NegativeTitleKeywords;
         }
         else
         {

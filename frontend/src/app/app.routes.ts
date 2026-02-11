@@ -32,6 +32,11 @@ export const routes: Routes = [
       import('./features/resume/resume.page').then((m) => m.ResumePage),
   },
   {
+    path: 'settings',
+    loadComponent: () =>
+      import('./features/settings/settings.page').then((m) => m.SettingsPage),
+  },
+  {
     path: '**',
     redirectTo: '/dashboard',
   },

@@ -323,4 +323,99 @@ public class JobScoringServiceTests
         result.MissingSkills.Should().Contain("Angular");
         result.MissingSkills.Should().Contain("TypeScript");
     }
+
+    // ==================== Profile-Driven Scoring ====================
+
+    [Fact]
+    public void ScoreSkills_WithCustomProfileRequiredSkills_UsesAsCore()
+    {
+        var profile = new SearchProfile
+        {
+            RequiredSkills = ["Python", "React", "AWS"],
+            PreferredSkills = ["Docker"]
+        };
+        var description = "We use Python, React, AWS, and Docker for our cloud applications.";
+        var (score, matched, missing) = JobScoringService.ScoreSkills(description, "", profile);
+
+        matched.Should().Contain("Python");
+        matched.Should().Contain("React");
+        matched.Should().Contain("AWS");
+        matched.Should().Contain("Docker");
+        missing.Should().BeEmpty();
+        score.Should().BeGreaterThanOrEqualTo(1.0);
+    }
+
+    [Fact]
+    public void ScoreSkills_WithEmptyProfileSkills_FallsBackToTaxonomy()
+    {
+        var profile = new SearchProfile
+        {
+            RequiredSkills = [],
+            PreferredSkills = []
+        };
+        var description = "C#, .NET, Angular, TypeScript, SQL Server, Azure";
+        var (score, matched, _) = JobScoringService.ScoreSkills(description, "", profile);
+
+        // Should still use SkillTaxonomy.CoreSkills as fallback
+        matched.Should().Contain("C#");
+        matched.Should().Contain(".NET");
+        matched.Should().Contain("Angular");
+        score.Should().BeGreaterThan(0.5);
+    }
+
+    [Fact]
+    public void ScoreTitle_WithCustomProfileTitleKeywords_MatchesCorrectly()
+    {
+        var profile = new SearchProfile
+        {
+            TitleKeywords = ["Data Engineer", "ML Engineer"]
+        };
+
+        var score = JobScoringService.ScoreTitle("Data Engineer", profile);
+        score.Should().Be(1.0);
+
+        var scoreMiss = JobScoringService.ScoreTitle("Senior Software Engineer", profile);
+        // Should not match custom keywords, falls to partial matching
+        scoreMiss.Should().BeLessThan(1.0);
+    }
+
+    [Fact]
+    public void HasNegativeKeywords_WithCustomProfileList_UsesIt()
+    {
+        var profile = new SearchProfile
+        {
+            NegativeTitleKeywords = ["Manager", "Director"]
+        };
+
+        JobScoringService.HasNegativeKeywords("Engineering Manager", profile).Should().BeTrue();
+        JobScoringService.HasNegativeKeywords("Director of Engineering", profile).Should().BeTrue();
+        // "Junior" is not in the custom list, so it should not be negative
+        JobScoringService.HasNegativeKeywords("Junior Software Engineer", profile).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ScoreJob_FullProfileDriven_NonDotNetSkills_ScoresWell()
+    {
+        var profile = new SearchProfile
+        {
+            RequiredSkills = ["Python", "React", "AWS"],
+            PreferredSkills = ["Docker", "Kubernetes"],
+            TitleKeywords = ["Senior Data Engineer", "Senior Backend Engineer"],
+            NegativeTitleKeywords = ["Junior", "Intern"],
+            Location = "San Francisco"
+        };
+
+        var job = CreateJob(
+            title: "Senior Data Engineer",
+            description: "Python, React, AWS, Docker, Kubernetes experience required.",
+            location: "Remote",
+            postedAt: DateTime.UtcNow);
+
+        var result = _sut.ScoreJob(job, profile);
+
+        result.Score.Should().BeGreaterThan(0.85);
+        result.MatchedSkills.Should().Contain("Python");
+        result.MatchedSkills.Should().Contain("React");
+        result.MatchedSkills.Should().Contain("AWS");
+    }
 }

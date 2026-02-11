@@ -185,15 +185,15 @@ import { JobCardComponent } from '../../shared/components/job-card/job-card.comp
 export class JobSearchPage implements OnInit {
   private careerService = inject(CareerService);
 
-  query = 'Senior Software Engineer .NET Angular';
-  location = 'United States';
+  query = '';
+  location = '';
   remoteOnly = false;
   statusFilter?: JobStatus;
   postedWithinHours?: number = 72;
   sortBy = 'score';
   pageSize = 20;
 
-  homeAddress = 'Rochester Hills, MI 48307';
+  homeAddress = '';
   radiusMiles = 30;
   includeRemote = true;
   homeCoords = signal<{ latitude: number; longitude: number; displayName: string } | null>(null);
@@ -206,6 +206,27 @@ export class JobSearchPage implements OnInit {
   page = signal(1);
 
   ngOnInit() {
+    this.careerService.getProfile().subscribe({
+      next: (profile) => {
+        this.query = profile.query || 'Senior Software Engineer .NET Angular';
+        this.location = profile.location || 'United States';
+        this.homeAddress = profile.location || '';
+        this.radiusMiles = profile.radiusMiles || 30;
+        this.remoteOnly = profile.remoteOnly;
+        this.includeRemote = !profile.remoteOnly || true;
+        this.initLoad();
+      },
+      error: () => {
+        // Fallback to defaults
+        this.query = 'Senior Software Engineer .NET Angular';
+        this.location = 'United States';
+        this.homeAddress = '';
+        this.initLoad();
+      },
+    });
+  }
+
+  private initLoad() {
     if (this.homeAddress) {
       this.geocodeHome();
     } else {

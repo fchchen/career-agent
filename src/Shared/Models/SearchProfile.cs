@@ -10,5 +10,7 @@ public class SearchProfile
     public bool RemoteOnly { get; set; }
     public List<string> RequiredSkills { get; set; } = [];
     public List<string> PreferredSkills { get; set; } = [];
+    public List<string> TitleKeywords { get; set; } = [];
+    public List<string> NegativeTitleKeywords { get; set; } = [];
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

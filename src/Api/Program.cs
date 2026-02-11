@@ -92,6 +92,7 @@ app.MapJobSearchEndpoints();
 app.MapResumeEndpoints();
 app.MapDashboardEndpoints();
 app.MapAdminEndpoints();
+app.MapProfileEndpoints();
 
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))

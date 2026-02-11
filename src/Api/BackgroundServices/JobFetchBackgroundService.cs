@@ -9,12 +9,6 @@ public class JobFetchBackgroundService : BackgroundService
     private readonly ILogger<JobFetchBackgroundService> _logger;
     private readonly TimeSpan _interval = TimeSpan.FromHours(2);
 
-    private static readonly string[] SearchQueries =
-    [
-        SearchDefaults.DefaultQuery,
-        "Senior Full Stack Developer"
-    ];
-
     public JobFetchBackgroundService(IServiceProvider serviceProvider, ILogger<JobFetchBackgroundService> logger)
     {
         _serviceProvider = serviceProvider;
@@ -45,13 +39,27 @@ public class JobFetchBackgroundService : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var agentService = scope.ServiceProvider.GetRequiredService<ICareerAgentService>();
+        var storageService = scope.ServiceProvider.GetRequiredService<IStorageService>();
 
-        _logger.LogInformation("Background job fetch starting with {Count} queries", SearchQueries.Length);
+        // Load profile for query/location (re-read each cycle so changes take effect)
+        var profile = await storageService.GetSearchProfileAsync();
+        var query = !string.IsNullOrWhiteSpace(profile?.Query) ? profile.Query : SearchDefaults.DefaultQuery;
+        var location = !string.IsNullOrWhiteSpace(profile?.Location) ? profile.Location : SearchDefaults.DefaultLocation;
 
-        foreach (var query in SearchQueries)
+        var queries = new List<string> { query };
+
+        // Add a "Full Stack" variant if the primary query doesn't already contain it
+        if (!query.Contains("Full Stack", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation("Fetching jobs for query: {Query}", query);
-            await agentService.SearchAndScoreAsync(query, SearchDefaults.DefaultLocation);
+            queries.Add("Senior Full Stack Developer");
+        }
+
+        _logger.LogInformation("Background job fetch starting with {Count} queries (profile-driven)", queries.Count);
+
+        foreach (var q in queries)
+        {
+            _logger.LogInformation("Fetching jobs for query: {Query}, location: {Location}", q, location);
+            await agentService.SearchAndScoreAsync(q, location);
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
 

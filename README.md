@@ -19,18 +19,29 @@ Full job posting with skill match analysis and direct apply links (LinkedIn, Ind
 
 ![Job Detail](docs/screenshots/job-detail.png)
 
+### Resume
+View and edit your master resume directly in the browser.
+
+![Resume](docs/screenshots/resume.png)
+
 ### Resume Tailor
 AI-generated tailored resume and cover letter side-by-side with the job description.
 
 ![Resume Tailor](docs/screenshots/resume-tailor.png)
 
+### Settings
+Configure your search profile — required/preferred skills, title keywords, negative keywords, and search preferences. All scoring and background fetch adapt automatically.
+
+![Settings](docs/screenshots/settings.png)
+
 ## Features
 
+- **Profile-Driven Personalization** — Configure your skills, title keywords, and search preferences in Settings; all scoring, searching, and background fetch adapt automatically
 - **Multi-Source Job Search** — Aggregates jobs from Google Jobs (via SerpAPI) and Adzuna, with cross-source deduplication
-- **Background Job Fetching** — Automatically searches multiple queries on a 2-hour cycle for continuous coverage
+- **Background Job Fetching** — Automatically searches using your profile's query and location on a 2-hour cycle
+- **Relevance Scoring** — Scores jobs against your profile's required/preferred skills, title keywords, and negative keywords with weighted fallback to defaults
 - **Location Filter** — Show remote jobs and/or jobs within a radius of your home address (geocoded via OpenStreetMap Nominatim)
 - **Direct Apply Links** — One-click apply buttons for LinkedIn, Indeed, ZipRecruiter, and other job boards
-- **Relevance Scoring** — Automatically scores and ranks jobs against your skills and experience
 - **Days-Old Badges** — Visual freshness indicators on job cards (Today, 1d, 2d, etc.)
 - **Resume Management** — View and edit your master resume directly in the browser
 - **Resume Tailoring** — AI rewrites your resume to match specific job descriptions using Google Gemini (free tier)
@@ -98,12 +109,19 @@ dotnet test
 ```
 src/
   Api/                  ASP.NET Core 8 Minimal API
-    Endpoints/          Route handlers (JobSearch, Resume, Dashboard)
+    Endpoints/          Route handlers (JobSearch, Resume, Dashboard, Profile)
     Services/           Business logic (composite job search, scoring, remote classification)
     Data/               EF Core DbContext + SQLite
     Middleware/          Global exception handling
-  Shared/               Models, DTOs, constants
+  Shared/               Models, DTOs, constants (SearchProfile, SkillTaxonomy, SearchDefaults)
 frontend/               Angular 21 + Material Design
+  features/
+    dashboard/          Job stats overview
+    job-search/         Search, filter, location-aware job browsing
+    job-detail/         Full posting with skill match analysis
+    resume-tailor/      AI-generated tailored resume + cover letter
+    resume/             Master resume editor
+    settings/           Profile configuration (skills, keywords, search prefs)
 tests/
   Api.Tests/            xUnit + Moq + FluentAssertions
 ```

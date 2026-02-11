@@ -98,3 +98,28 @@ export interface LocationFilter {
   radiusMiles: number;
   includeRemote: boolean;
 }
+
+export interface SearchProfileDto {
+  id: number;
+  name: string;
+  query: string;
+  location: string;
+  radiusMiles: number;
+  remoteOnly: boolean;
+  requiredSkills: string[];
+  preferredSkills: string[];
+  titleKeywords: string[];
+  negativeTitleKeywords: string[];
+  createdAt: string;
+}
+
+export interface SearchProfileUpdateRequest {
+  query: string;
+  location: string;
+  radiusMiles: number;
+  remoteOnly: boolean;
+  requiredSkills: string[];
+  preferredSkills: string[];
+  titleKeywords: string[];
+  negativeTitleKeywords: string[];
+}
