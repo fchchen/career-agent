@@ -2,6 +2,28 @@
 
 AI-powered job search and resume tailoring tool. Aggregates job listings from Google Jobs, scores them against your profile, and uses Google Gemini to generate tailored resumes and cover letters.
 
+## Screenshots
+
+### Dashboard
+Overview with job stats, top scoring matches, and recently posted listings.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Job Search
+Search and filter jobs by query, location, status, and relevance score.
+
+![Job Search](docs/screenshots/job-search.png)
+
+### Job Detail
+Full job posting with skill match analysis (matched vs missing skills).
+
+![Job Detail](docs/screenshots/job-detail.png)
+
+### Resume Tailor
+AI-generated tailored resume and cover letter side-by-side with the job description.
+
+![Resume Tailor](docs/screenshots/resume-tailor.png)
+
 ## Features
 
 - **Job Search** — Searches Google Jobs via SerpAPI across LinkedIn, Indeed, Glassdoor, and more
