@@ -19,14 +19,15 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> GetDashboard(IStorageService storageService)
     {
-        var totalJobs = await storageService.GetJobCountAsync();
-        var newJobs = await storageService.GetJobCountAsync(JobStatus.New);
-        var appliedJobs = await storageService.GetJobCountAsync(JobStatus.Applied);
-        var dismissedJobs = await storageService.GetJobCountAsync(JobStatus.Dismissed);
+        const int recentHours = 72;
+        var totalJobs = await storageService.GetJobCountAsync(postedWithinHours: recentHours);
+        var newJobs = await storageService.GetJobCountAsync(JobStatus.New, postedWithinHours: recentHours);
+        var appliedJobs = await storageService.GetJobCountAsync(JobStatus.Applied, postedWithinHours: recentHours);
+        var dismissedJobs = await storageService.GetJobCountAsync(JobStatus.Dismissed, postedWithinHours: recentHours);
         var avgScore = await storageService.GetAverageScoreAsync();
 
-        var topJobs = await storageService.GetJobsAsync(1, 5, null, "score");
-        var recentJobs = await storageService.GetJobsAsync(1, 5, null, "date");
+        var topJobs = await storageService.GetJobsAsync(1, 5, null, "score", postedWithinHours: 72);
+        var recentJobs = await storageService.GetJobsAsync(1, 5, null, "date", postedWithinHours: 72);
 
         var stats = new DashboardStats(totalJobs, newJobs, appliedJobs, dismissedJobs, Math.Round(avgScore, 4));
 
