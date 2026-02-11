@@ -19,12 +19,18 @@ public class InMemoryStorageService : IStorageService
     public Task<JobListing?> GetJobByExternalIdAsync(string externalId, string source)
         => Task.FromResult(_jobs.FirstOrDefault(j => j.ExternalId == externalId && j.Source == source));
 
-    public Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null)
+    public Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null)
     {
         var query = _jobs.AsEnumerable();
 
         if (status.HasValue)
             query = query.Where(j => j.Status == status.Value);
+
+        if (postedWithinHours.HasValue)
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-postedWithinHours.Value);
+            query = query.Where(j => j.PostedAt >= cutoff);
+        }
 
         query = sortBy?.ToLowerInvariant() switch
         {
@@ -37,12 +43,20 @@ public class InMemoryStorageService : IStorageService
         return Task.FromResult(result);
     }
 
-    public Task<int> GetJobCountAsync(JobStatus? status = null)
+    public Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null)
     {
-        var count = status.HasValue
-            ? _jobs.Count(j => j.Status == status.Value)
-            : _jobs.Count;
-        return Task.FromResult(count);
+        var query = _jobs.AsEnumerable();
+
+        if (status.HasValue)
+            query = query.Where(j => j.Status == status.Value);
+
+        if (postedWithinHours.HasValue)
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-postedWithinHours.Value);
+            query = query.Where(j => j.PostedAt >= cutoff);
+        }
+
+        return Task.FromResult(query.Count());
     }
 
     public Task<JobListing> UpsertJobAsync(JobListing job)

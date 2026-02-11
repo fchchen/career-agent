@@ -66,6 +66,15 @@ import { JobCardComponent } from '../../shared/components/job-card/job-card.comp
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
+          <mat-label>Posted within</mat-label>
+          <mat-select [(ngModel)]="postedWithinHours" (selectionChange)="loadJobs()">
+            <mat-option [value]="undefined">Any time</mat-option>
+            <mat-option [value]="24">Last 24 hours</mat-option>
+            <mat-option [value]="72">Last 3 days</mat-option>
+            <mat-option [value]="168">Last week</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
           <mat-label>Sort by</mat-label>
           <mat-select [(ngModel)]="sortBy" (selectionChange)="loadJobs()">
             <mat-option value="score">Score</mat-option>
@@ -138,6 +147,7 @@ export class JobSearchPage implements OnInit {
   location = 'United States';
   remoteOnly = false;
   statusFilter?: JobStatus;
+  postedWithinHours?: number;
   sortBy = 'score';
   pageSize = 20;
 
@@ -154,7 +164,7 @@ export class JobSearchPage implements OnInit {
   loadJobs() {
     this.loading.set(true);
     this.careerService
-      .getJobs(this.page(), this.pageSize, this.statusFilter, this.sortBy)
+      .getJobs(this.page(), this.pageSize, this.statusFilter, this.sortBy, this.postedWithinHours)
       .subscribe({
         next: (res) => {
           this.jobs.set(res.items);

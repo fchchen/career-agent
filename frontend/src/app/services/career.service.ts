@@ -46,13 +46,18 @@ export class CareerService {
     page = 1,
     pageSize = 20,
     status?: JobStatus,
-    sortBy?: string
+    sortBy?: string,
+    postedWithinHours?: number
   ): Observable<PagedResponse<JobListingDto>> {
     if (this.staticData) {
       return this.getCached<PagedResponse<JobListingDto>>(`${this.apiUrl}/jobs.json`).pipe(
         map((data) => {
           let items = [...data.items];
           if (status) items = items.filter((j) => j.status === status);
+          if (postedWithinHours) {
+            const cutoff = new Date(Date.now() - postedWithinHours * 60 * 60 * 1000);
+            items = items.filter((j) => new Date(j.postedAt) >= cutoff);
+          }
           if (sortBy === 'date') {
             items.sort(
               (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
@@ -73,6 +78,7 @@ export class CareerService {
     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
     if (status) params = params.set('status', status);
     if (sortBy) params = params.set('sortBy', sortBy);
+    if (postedWithinHours) params = params.set('postedWithinHours', postedWithinHours);
     return this.http.get<PagedResponse<JobListingDto>>(`${this.apiUrl}/jobs`, { params });
   }
 

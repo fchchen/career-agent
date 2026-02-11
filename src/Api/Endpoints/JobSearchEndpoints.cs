@@ -34,6 +34,7 @@ public static class JobSearchEndpoints
         [FromQuery] int pageSize,
         [FromQuery] string? status,
         [FromQuery] string? sortBy,
+        [FromQuery] int? postedWithinHours,
         IStorageService storageService)
     {
         page = page < 1 ? 1 : page;
@@ -43,8 +44,8 @@ public static class JobSearchEndpoints
         if (Enum.TryParse<JobStatus>(status, true, out var parsed))
             statusFilter = parsed;
 
-        var jobs = await storageService.GetJobsAsync(page, pageSize, statusFilter, sortBy);
-        var totalCount = await storageService.GetJobCountAsync(statusFilter);
+        var jobs = await storageService.GetJobsAsync(page, pageSize, statusFilter, sortBy, postedWithinHours);
+        var totalCount = await storageService.GetJobCountAsync(statusFilter, postedWithinHours);
 
         var dtos = jobs.Select(MapToDto).ToList();
         return Results.Ok(new PagedResponse<JobListingDto>(dtos, totalCount, page, pageSize));

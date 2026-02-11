@@ -19,12 +19,18 @@ public class SqliteStorageService : IStorageService
     public async Task<JobListing?> GetJobByExternalIdAsync(string externalId, string source)
         => await _db.JobListings.FirstOrDefaultAsync(j => j.ExternalId == externalId && j.Source == source);
 
-    public async Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null)
+    public async Task<List<JobListing>> GetJobsAsync(int page = 1, int pageSize = 20, JobStatus? status = null, string? sortBy = null, int? postedWithinHours = null)
     {
         var query = _db.JobListings.AsQueryable();
 
         if (status.HasValue)
             query = query.Where(j => j.Status == status.Value);
+
+        if (postedWithinHours.HasValue)
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-postedWithinHours.Value);
+            query = query.Where(j => j.PostedAt >= cutoff);
+        }
 
         query = sortBy?.ToLowerInvariant() switch
         {
@@ -35,11 +41,20 @@ public class SqliteStorageService : IStorageService
         return await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
     }
 
-    public async Task<int> GetJobCountAsync(JobStatus? status = null)
+    public async Task<int> GetJobCountAsync(JobStatus? status = null, int? postedWithinHours = null)
     {
-        return status.HasValue
-            ? await _db.JobListings.CountAsync(j => j.Status == status.Value)
-            : await _db.JobListings.CountAsync();
+        var query = _db.JobListings.AsQueryable();
+
+        if (status.HasValue)
+            query = query.Where(j => j.Status == status.Value);
+
+        if (postedWithinHours.HasValue)
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-postedWithinHours.Value);
+            query = query.Where(j => j.PostedAt >= cutoff);
+        }
+
+        return await query.CountAsync();
     }
 
     public async Task<JobListing> UpsertJobAsync(JobListing job)
