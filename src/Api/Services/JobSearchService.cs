@@ -4,7 +4,7 @@ using CareerAgent.Shared.Models;
 
 namespace CareerAgent.Api.Services;
 
-public class JobSearchService : IJobSearchService
+public class JobSearchService : IJobSearchSource
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
@@ -82,25 +82,10 @@ public class JobSearchService : IJobSearchService
             Url = applyLinks.FirstOrDefault()?.Url ?? serpJob.ShareLink ?? string.Empty,
             ApplyLinks = applyLinks,
             Salary = serpJob.DetectedExtensions?.Salary,
-            IsRemote = ClassifyRemote(location, description),
+            IsRemote = RemoteClassifier.ClassifyRemote(location, description, serpJob.Title),
             PostedAt = postedAt,
             FetchedAt = DateTime.UtcNow
         };
-    }
-
-    internal static bool ClassifyRemote(string location, string description)
-    {
-        var loc = location.ToLowerInvariant();
-        var desc = description.ToLowerInvariant();
-
-        // Location-based signals
-        if (loc.Contains("remote") || loc == "anywhere" || loc == "united states"
-            || loc.Contains("work from home") || loc == "us" || loc == "usa")
-            return true;
-
-        // Description-based signals (only strong indicators)
-        var remotePatterns = new[] { "remote position", "fully remote", "100% remote", "work remotely", "remote role", "remote opportunity" };
-        return remotePatterns.Any(p => desc.Contains(p));
     }
 
     internal static DateTime ParseRelativeDate(string? relativeDate)

@@ -72,7 +72,7 @@ public static class AdminEndpoints
             {
                 total++;
                 var wasRemote = job.IsRemote;
-                job.IsRemote = JobSearchService.ClassifyRemote(job.Location, job.Description);
+                job.IsRemote = RemoteClassifier.ClassifyRemote(job.Location, job.Description, job.Title);
 
                 if (job.IsRemote != wasRemote)
                     classified++;

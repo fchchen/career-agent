@@ -29,7 +29,11 @@ else
 }
 
 // Register HttpClient for external API calls
-builder.Services.AddHttpClient<IJobSearchService, JobSearchService>();
+builder.Services.AddHttpClient<JobSearchService>();
+builder.Services.AddHttpClient<AdzunaJobSearchService>();
+builder.Services.AddTransient<IJobSearchSource>(sp => sp.GetRequiredService<JobSearchService>());
+builder.Services.AddTransient<IJobSearchSource>(sp => sp.GetRequiredService<AdzunaJobSearchService>());
+builder.Services.AddTransient<IJobSearchService, CompositeJobSearchService>();
 builder.Services.AddHttpClient<ILlmService, GeminiLlmService>();
 builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>();
 

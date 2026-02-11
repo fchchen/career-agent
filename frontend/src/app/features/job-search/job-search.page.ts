@@ -193,7 +193,7 @@ export class JobSearchPage implements OnInit {
   sortBy = 'score';
   pageSize = 20;
 
-  homeAddress = '';
+  homeAddress = 'Rochester Hills, MI 48307';
   radiusMiles = 30;
   includeRemote = true;
   homeCoords = signal<{ latitude: number; longitude: number; displayName: string } | null>(null);
@@ -206,14 +206,18 @@ export class JobSearchPage implements OnInit {
   page = signal(1);
 
   ngOnInit() {
-    this.loadJobs();
+    if (this.homeAddress) {
+      this.geocodeHome();
+    } else {
+      this.loadJobs();
+    }
   }
 
   loadJobs() {
     this.loading.set(true);
     const coords = this.homeCoords();
     const locationFilter: LocationFilter | undefined = coords
-      ? { homeLatitude: coords.latitude, homeLongitude: coords.longitude, radiusMiles: this.radiusMiles, includeRemote: this.includeRemote }
+      ? { homeLatitude: coords.latitude, homeLongitude: coords.longitude, radiusMiles: this.radiusMiles, includeRemote: this.includeRemote || this.remoteOnly }
       : undefined;
     this.careerService
       .getJobs(this.page(), this.pageSize, this.statusFilter, this.sortBy, this.postedWithinHours, locationFilter)

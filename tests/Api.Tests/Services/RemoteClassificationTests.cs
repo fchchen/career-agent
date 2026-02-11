@@ -17,7 +17,7 @@ public class RemoteClassificationTests
     [InlineData("New York, NY (Remote)", "", true)]
     public void ClassifyRemote_RemoteLocations_ReturnsTrue(string location, string description, bool expected)
     {
-        JobSearchService.ClassifyRemote(location, description).Should().Be(expected);
+        RemoteClassifier.ClassifyRemote(location, description).Should().Be(expected);
     }
 
     [Theory]
@@ -27,7 +27,7 @@ public class RemoteClassificationTests
     [InlineData("Longmont, CO", "", false)]
     public void ClassifyRemote_PhysicalLocations_ReturnsFalse(string location, string description, bool expected)
     {
-        JobSearchService.ClassifyRemote(location, description).Should().Be(expected);
+        RemoteClassifier.ClassifyRemote(location, description).Should().Be(expected);
     }
 
     [Theory]
@@ -37,7 +37,7 @@ public class RemoteClassificationTests
     [InlineData("Seattle, WA", "Remote opportunity for senior developers", true)]
     public void ClassifyRemote_DescriptionContainsRemoteSignals_ReturnsTrue(string location, string description, bool expected)
     {
-        JobSearchService.ClassifyRemote(location, description).Should().Be(expected);
+        RemoteClassifier.ClassifyRemote(location, description).Should().Be(expected);
     }
 
     [Theory]
@@ -45,6 +45,25 @@ public class RemoteClassificationTests
     [InlineData("Miami, FL", "Hybrid role, 3 days in office")]
     public void ClassifyRemote_NoRemoteSignals_ReturnsFalse(string location, string description)
     {
-        JobSearchService.ClassifyRemote(location, description).Should().BeFalse();
+        RemoteClassifier.ClassifyRemote(location, description).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("Software Engineer - Remote")]
+    [InlineData("Software Engineer - REMOTE")]
+    [InlineData("Software Engineer (Remote)")]
+    [InlineData("Remote Software Engineer")]
+    [InlineData("Senior Dev - Work From Home")]
+    public void ClassifyRemote_TitleContainsRemoteSignals_ReturnsTrue(string title)
+    {
+        RemoteClassifier.ClassifyRemote("Auburn Hills, MI", "On-site office job", title).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("Senior Software Engineer")]
+    [InlineData("Full Stack Developer")]
+    public void ClassifyRemote_TitleWithoutRemoteSignals_ReturnsFalse(string title)
+    {
+        RemoteClassifier.ClassifyRemote("Auburn Hills, MI", "On-site office job", title).Should().BeFalse();
     }
 }
