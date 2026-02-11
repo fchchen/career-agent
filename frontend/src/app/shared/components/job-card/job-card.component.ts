@@ -67,18 +67,18 @@ import { ScoreBadgeComponent } from '../score-badge/score-badge.component';
       margin: 12px 0;
     }
     .matched {
-      --mdc-chip-elevated-container-color: #e8f5e9;
-      --mdc-chip-label-text-color: #2e7d32;
+      --mdc-chip-elevated-container-color: #1b5e20;
+      --mdc-chip-label-text-color: #a5d6a7;
     }
     .missing {
-      --mdc-chip-elevated-container-color: #ffebee;
-      --mdc-chip-label-text-color: #c62828;
+      --mdc-chip-elevated-container-color: #b71c1c;
+      --mdc-chip-label-text-color: #ef9a9a;
     }
     .meta {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: #666;
+      color: var(--mat-sys-on-surface-variant);
       font-size: 12px;
       margin-top: 8px;
     }

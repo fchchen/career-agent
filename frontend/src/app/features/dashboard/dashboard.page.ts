@@ -102,11 +102,11 @@ import { JobCardComponent } from '../../shared/components/job-card/job-card.comp
       font-weight: 700;
       text-align: center;
     }
-    .stat-value.new { color: #1565c0; }
-    .stat-value.applied { color: #2e7d32; }
+    .stat-value.new { color: #64b5f6; }
+    .stat-value.applied { color: #81c784; }
     .stat-label {
       text-align: center;
-      color: #666;
+      color: var(--mat-sys-on-surface-variant);
       font-size: 14px;
       margin-top: 4px;
     }
@@ -123,7 +123,7 @@ import { JobCardComponent } from '../../shared/components/job-card/job-card.comp
       flex-direction: column;
       gap: 12px;
     }
-    .empty { color: #999; text-align: center; padding: 24px; }
+    .empty { color: var(--mat-sys-on-surface-variant); text-align: center; padding: 24px; }
     @media (max-width: 600px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }

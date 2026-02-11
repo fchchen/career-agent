@@ -102,7 +102,7 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
       margin-bottom: 16px;
     }
     h1 { margin: 0; }
-    .subtitle { color: #666; margin-top: 4px; }
+    .subtitle { color: var(--mat-sys-on-surface-variant); margin-top: 4px; }
     .actions {
       display: flex;
       gap: 12px;
@@ -117,12 +117,12 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
       margin-top: 8px;
     }
     .matched {
-      --mdc-chip-elevated-container-color: #e8f5e9;
-      --mdc-chip-label-text-color: #2e7d32;
+      --mdc-chip-elevated-container-color: #1b5e20;
+      --mdc-chip-label-text-color: #a5d6a7;
     }
     .missing {
-      --mdc-chip-elevated-container-color: #ffebee;
-      --mdc-chip-label-text-color: #c62828;
+      --mdc-chip-elevated-container-color: #b71c1c;
+      --mdc-chip-label-text-color: #ef9a9a;
     }
     .description { margin: 20px 0; }
     .desc-text {
@@ -133,7 +133,7 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
     .meta-info {
       display: flex;
       gap: 24px;
-      color: #999;
+      color: var(--mat-sys-on-surface-variant);
       font-size: 12px;
       margin-top: 24px;
     }

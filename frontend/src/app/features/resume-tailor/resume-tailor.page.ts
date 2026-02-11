@@ -95,7 +95,7 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
     .center { display: flex; justify-content: center; padding: 48px; }
     h1 { margin-bottom: 4px; }
     .subtitle {
-      color: #666;
+      color: var(--mat-sys-on-surface-variant);
       margin-bottom: 20px;
       display: flex;
       align-items: center;
@@ -106,7 +106,7 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
       align-items: center;
       gap: 16px;
       padding: 24px;
-      background: #e3f2fd;
+      background: #0d47a1;
       border-radius: 8px;
       margin: 20px 0;
     }
@@ -121,8 +121,8 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
     }
     h3 { margin-top: 0; }
     .content-box {
-      background: white;
-      border: 1px solid #e0e0e0;
+      background: var(--mat-sys-surface-container);
+      border: 1px solid var(--mat-sys-outline-variant);
       border-radius: 8px;
       padding: 16px;
       white-space: pre-wrap;
@@ -141,9 +141,9 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
       gap: 12px;
     }
     .error-card {
-      background: #ffebee;
+      background: #b71c1c;
       margin-top: 16px;
-      mat-icon { color: #c62828; vertical-align: middle; margin-right: 8px; }
+      mat-icon { color: #ef9a9a; vertical-align: middle; margin-right: 8px; }
     }
     @media (max-width: 900px) {
       .split-view { grid-template-columns: 1fr; }

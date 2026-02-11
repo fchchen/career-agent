@@ -30,15 +30,15 @@ export class ScoreBadgeComponent {
 
   bgColor = computed(() => {
     const s = this.score();
-    if (s >= 0.7) return '#e8f5e9';
-    if (s >= 0.4) return '#fff3e0';
-    return '#ffebee';
+    if (s >= 0.7) return '#1b5e20';
+    if (s >= 0.4) return '#e65100';
+    return '#b71c1c';
   });
 
   textColor = computed(() => {
     const s = this.score();
-    if (s >= 0.7) return '#2e7d32';
-    if (s >= 0.4) return '#e65100';
-    return '#c62828';
+    if (s >= 0.7) return '#a5d6a7';
+    if (s >= 0.4) return '#ffcc80';
+    return '#ef9a9a';
   });
 }

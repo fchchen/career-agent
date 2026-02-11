@@ -30,5 +30,5 @@ mat-toolbar {
 
 main {
   min-height: calc(100vh - 64px);
-  background: #fafafa;
+  background: var(--mat-sys-surface);
 }

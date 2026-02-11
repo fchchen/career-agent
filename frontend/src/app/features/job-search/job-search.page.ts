@@ -128,7 +128,7 @@ import { JobCardComponent } from '../../shared/components/job-card/job-card.comp
       flex-direction: column;
       gap: 12px;
     }
-    .empty { color: #999; text-align: center; padding: 24px; }
+    .empty { color: var(--mat-sys-on-surface-variant); text-align: center; padding: 24px; }
   `,
 })
 export class JobSearchPage implements OnInit {
