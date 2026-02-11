@@ -189,7 +189,7 @@ export class JobSearchPage implements OnInit {
   location = 'United States';
   remoteOnly = false;
   statusFilter?: JobStatus;
-  postedWithinHours?: number;
+  postedWithinHours?: number = 72;
   sortBy = 'score';
   pageSize = 20;
 

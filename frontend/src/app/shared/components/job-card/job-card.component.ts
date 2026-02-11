@@ -23,6 +23,9 @@ import { ScoreBadgeComponent } from '../score-badge/score-badge.component';
           @if (job().salary) {
             &middot; {{ job().salary }}
           }
+          @if (job().isRemote) {
+            <span class="remote-badge">Remote</span>
+          }
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
@@ -73,6 +76,15 @@ import { ScoreBadgeComponent } from '../score-badge/score-badge.component';
     .missing {
       --mdc-chip-elevated-container-color: #b71c1c;
       --mdc-chip-label-text-color: #ef9a9a;
+    }
+    .remote-badge {
+      background: #1565c0;
+      color: #bbdefb;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-left: 4px;
     }
     .meta {
       display: flex;

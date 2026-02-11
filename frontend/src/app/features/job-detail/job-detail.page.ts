@@ -37,6 +37,7 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
             <p class="subtitle">
               {{ j.company }} &middot; {{ j.location }}
               @if (j.salary) { &middot; {{ j.salary }} }
+              @if (j.isRemote) { <span class="remote-badge">Remote</span> }
             </p>
           </div>
           <app-score-badge [score]="j.relevanceScore" />
@@ -111,6 +112,15 @@ import { ScoreBadgeComponent } from '../../shared/components/score-badge/score-b
     }
     h1 { margin: 0; }
     .subtitle { color: var(--mat-sys-on-surface-variant); margin-top: 4px; }
+    .remote-badge {
+      background: #1565c0;
+      color: #bbdefb;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-left: 4px;
+    }
     .actions {
       display: flex;
       gap: 12px;
