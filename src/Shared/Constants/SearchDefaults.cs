@@ -5,7 +5,7 @@ public static class SearchDefaults
     public const string DefaultQuery = "Senior Software Engineer .NET Angular";
     public const string DefaultLocation = "United States";
     public const int DefaultRadiusMiles = 50;
-    public const int MaxResultsPerSearch = 20;
+    public const int MaxResultsPerSearch = 50;
 
     public static readonly List<string> DefaultTitleKeywords =
     [

@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -41,7 +41,10 @@ import { ScoreBadgeComponent } from '../score-badge/score-badge.component';
           <span class="source">
             <mat-icon>language</mat-icon> {{ job().source }}
           </span>
-          <span class="date">{{ job().postedAt | date: 'mediumDate' }}</span>
+          <span class="date">
+            <span class="days-badge" [class]="daysClass()">{{ daysLabel() }}</span>
+            {{ job().postedAt | date: 'mediumDate' }}
+          </span>
         </div>
       </mat-card-content>
     </mat-card>
@@ -86,6 +89,26 @@ import { ScoreBadgeComponent } from '../score-badge/score-badge.component';
       font-weight: 500;
       margin-left: 4px;
     }
+    .days-badge {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-right: 6px;
+    }
+    .days-fresh {
+      background: #1b5e20;
+      color: #a5d6a7;
+    }
+    .days-recent {
+      background: #424242;
+      color: #bdbdbd;
+    }
+    .days-old {
+      background: #37474f;
+      color: #78909c;
+      opacity: 0.7;
+    }
     .meta {
       display: flex;
       justify-content: space-between;
@@ -108,4 +131,25 @@ import { ScoreBadgeComponent } from '../score-badge/score-badge.component';
 })
 export class JobCardComponent {
   job = input.required<JobListingDto>();
+
+  daysOld = computed(() => {
+    const posted = new Date(this.job().postedAt);
+    const now = new Date();
+    // Compare calendar dates in local time to avoid timezone offset issues
+    const postedDate = new Date(posted.getFullYear(), posted.getMonth(), posted.getDate());
+    const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.max(0, Math.round((todayDate.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24)));
+  });
+
+  daysLabel = computed(() => {
+    const d = this.daysOld();
+    return d === 0 ? 'Today' : `${d}d`;
+  });
+
+  daysClass = computed(() => {
+    const d = this.daysOld();
+    if (d === 0) return 'days-fresh';
+    if (d <= 3) return 'days-recent';
+    return 'days-old';
+  });
 }

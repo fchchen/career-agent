@@ -9,6 +9,12 @@ public class JobFetchBackgroundService : BackgroundService
     private readonly ILogger<JobFetchBackgroundService> _logger;
     private readonly TimeSpan _interval = TimeSpan.FromHours(2);
 
+    private static readonly string[] SearchQueries =
+    [
+        SearchDefaults.DefaultQuery,
+        "Senior Full Stack Developer"
+    ];
+
     public JobFetchBackgroundService(IServiceProvider serviceProvider, ILogger<JobFetchBackgroundService> logger)
     {
         _serviceProvider = serviceProvider;
@@ -40,11 +46,14 @@ public class JobFetchBackgroundService : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var agentService = scope.ServiceProvider.GetRequiredService<ICareerAgentService>();
 
-        _logger.LogInformation("Background job fetch starting");
+        _logger.LogInformation("Background job fetch starting with {Count} queries", SearchQueries.Length);
 
-        await agentService.SearchAndScoreAsync(
-            SearchDefaults.DefaultQuery,
-            SearchDefaults.DefaultLocation);
+        foreach (var query in SearchQueries)
+        {
+            _logger.LogInformation("Fetching jobs for query: {Query}", query);
+            await agentService.SearchAndScoreAsync(query, SearchDefaults.DefaultLocation);
+            await Task.Delay(TimeSpan.FromSeconds(5));
+        }
 
         _logger.LogInformation("Background job fetch complete");
     }

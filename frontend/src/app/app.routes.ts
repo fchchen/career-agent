@@ -27,6 +27,11 @@ export const routes: Routes = [
       import('./features/resume-tailor/resume-tailor.page').then((m) => m.ResumeTailorPage),
   },
   {
+    path: 'resume',
+    loadComponent: () =>
+      import('./features/resume/resume.page').then((m) => m.ResumePage),
+  },
+  {
     path: '**',
     redirectTo: '/dashboard',
   },

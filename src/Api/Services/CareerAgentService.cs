@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using CareerAgent.Shared.Constants;
 using CareerAgent.Shared.Models;
 
@@ -33,10 +34,22 @@ public class CareerAgentService : ICareerAgentService
 
         var profile = await _storageService.GetSearchProfileAsync();
 
+        // Use the profile's specific location when the search location is broad
+        // This helps location-aware sources (Adzuna) return nearby results
+        if (!string.IsNullOrWhiteSpace(profile?.Location) && IsBroadLocation(searchLocation))
+            searchLocation = profile.Location;
+
         _logger.LogInformation("Starting search: {Query} in {Location} (remote: {Remote})", searchQuery, searchLocation, remote);
 
         var jobs = await _searchService.SearchAsync(searchQuery, searchLocation, remote);
         _logger.LogInformation("Found {Count} raw jobs", jobs.Count);
+
+        // Cross-source dedup by normalized title + company
+        var beforeDedup = jobs.Count;
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        jobs = jobs.Where(j => seen.Add(NormalizeKey(j.Title, j.Company))).ToList();
+        if (jobs.Count < beforeDedup)
+            _logger.LogInformation("Deduped {Removed} cross-source duplicates", beforeDedup - jobs.Count);
 
         foreach (var job in jobs)
         {
@@ -46,8 +59,8 @@ public class CareerAgentService : ICareerAgentService
             job.MissingSkills = scoreResult.MissingSkills;
         }
 
-        // Geocode non-remote jobs
-        foreach (var job in jobs.Where(j => !j.IsRemote && !string.IsNullOrWhiteSpace(j.Location)))
+        // Geocode non-remote jobs (skip if lat/lng already provided by source)
+        foreach (var job in jobs.Where(j => !j.IsRemote && !string.IsNullOrWhiteSpace(j.Location) && !j.Latitude.HasValue && !j.Longitude.HasValue))
         {
             var geo = await _geocodingService.GeocodeAsync(job.Location);
             if (geo is not null)
@@ -67,5 +80,26 @@ public class CareerAgentService : ICareerAgentService
             jobs.Count, jobs.FirstOrDefault()?.RelevanceScore ?? 0);
 
         return jobs;
+    }
+
+    private static readonly HashSet<string> BroadLocations = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "united states", "us", "usa", "anywhere", "remote"
+    };
+
+    private static bool IsBroadLocation(string location)
+    {
+        return BroadLocations.Contains(location.Trim());
+    }
+
+    private static string NormalizeKey(string title, string company)
+    {
+        return $"{Normalize(title)}|{Normalize(company)}";
+    }
+
+    private static string Normalize(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        return Regex.Replace(value.Trim().ToLowerInvariant(), @"\s+", " ");
     }
 }
