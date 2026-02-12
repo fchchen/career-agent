@@ -127,6 +127,13 @@ public class InMemoryStorageService : IStorageService
         return Task.CompletedTask;
     }
 
+    public Task<int> PurgeOldJobsAsync(int maxAgeDays = 7)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-maxAgeDays);
+        var count = _jobs.RemoveAll(j => j.PostedAt < cutoff);
+        return Task.FromResult(count);
+    }
+
     public Task<MasterResume?> GetMasterResumeAsync(int? id = null)
     {
         var resume = id.HasValue

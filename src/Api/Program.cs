@@ -71,6 +71,12 @@ else
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CareerAgentDbContext>();
     db.Database.Migrate();
+
+    // Purge jobs older than 7 days on startup
+    var storage = scope.ServiceProvider.GetRequiredService<IStorageService>();
+    var purged = storage.PurgeOldJobsAsync(maxAgeDays: 7).GetAwaiter().GetResult();
+    if (purged > 0)
+        app.Logger.LogInformation("Purged {Count} jobs older than 7 days", purged);
 }
 
 // Middleware

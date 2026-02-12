@@ -139,6 +139,17 @@ public class SqliteStorageService : IStorageService
         }
     }
 
+    public async Task<int> PurgeOldJobsAsync(int maxAgeDays = 7)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-maxAgeDays);
+        var oldJobs = await _db.JobListings
+            .Where(j => j.PostedAt < cutoff)
+            .ToListAsync();
+        _db.JobListings.RemoveRange(oldJobs);
+        await _db.SaveChangesAsync();
+        return oldJobs.Count;
+    }
+
     public async Task<MasterResume?> GetMasterResumeAsync(int? id = null)
     {
         return id.HasValue

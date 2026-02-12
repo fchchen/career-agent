@@ -13,6 +13,7 @@ public interface IStorageService
     Task<JobListing> UpsertJobAsync(JobListing job);
     Task UpsertManyJobsAsync(IEnumerable<JobListing> jobs);
     Task UpdateJobStatusAsync(int id, JobStatus status);
+    Task<int> PurgeOldJobsAsync(int maxAgeDays = 7);
 
     // Master Resumes
     Task<MasterResume?> GetMasterResumeAsync(int? id = null);
