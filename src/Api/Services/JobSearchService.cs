@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using CareerAgent.Shared.Constants;
 using CareerAgent.Shared.Models;
 
@@ -23,6 +25,8 @@ public class JobSearchService : IJobSearchSource
         _logger = logger;
     }
 
+    private const int MaxPages = 2; // 2 pages × 10 results = 20 jobs, costs 2 API calls
+
     public async Task<List<JobListing>> SearchAsync(string query, string location, bool remoteOnly = false)
     {
         var apiKey = _configuration["SerpApi:ApiKey"];
@@ -34,30 +38,42 @@ public class JobSearchService : IJobSearchSource
             return [];
         }
 
-        var searchQuery = remoteOnly ? $"{query} remote" : query;
+        // Always search for remote jobs nationwide — Adzuna covers local + remote separately
+        var searchQuery = $"{query} remote";
+        var serpLocation = "United States";
+        var allJobs = new List<JobListing>();
+        string? nextPageToken = null;
 
-        var url = $"{baseUrl}?engine=google_jobs&q={Uri.EscapeDataString(searchQuery)}" +
-                  $"&location={Uri.EscapeDataString(location)}" +
-                  $"&api_key={apiKey}" +
-                  $"&num={SearchDefaults.MaxResultsPerSearch}";
-
-        _logger.LogInformation("Searching SerpAPI for: {Query} in {Location}", searchQuery, location);
-
-        var response = await _httpClient.GetStringAsync(url);
-        var serpResult = JsonSerializer.Deserialize<SerpApiResponse>(response, JsonOptions);
-
-        if (serpResult?.JobsResults is null || serpResult.JobsResults.Count == 0)
+        for (var page = 0; page < MaxPages; page++)
         {
-            _logger.LogInformation("No jobs found for query: {Query}", searchQuery);
-            return [];
+            var url = $"{baseUrl}?engine=google_jobs&q={Uri.EscapeDataString(searchQuery)}" +
+                      $"&location={Uri.EscapeDataString(serpLocation)}" +
+                      $"&api_key={apiKey}";
+
+            if (nextPageToken != null)
+                url += $"&next_page_token={Uri.EscapeDataString(nextPageToken)}";
+
+            _logger.LogInformation("Searching SerpAPI for: {Query} in {Location} (page {Page})", searchQuery, serpLocation, page + 1);
+
+            var response = await _httpClient.GetStringAsync(url);
+            var serpResult = JsonSerializer.Deserialize<SerpApiResponse>(response, JsonOptions);
+
+            if (serpResult?.JobsResults is null || serpResult.JobsResults.Count == 0)
+            {
+                _logger.LogInformation("No jobs found for query: {Query} (page {Page})", searchQuery, page + 1);
+                break;
+            }
+
+            allJobs.AddRange(serpResult.JobsResults.Select(MapToJobListing));
+
+            // Get next page token for pagination
+            nextPageToken = serpResult.SerpApiPagination?.NextPageToken;
+            if (string.IsNullOrEmpty(nextPageToken))
+                break;
         }
 
-        var jobs = serpResult.JobsResults
-            .Select(MapToJobListing)
-            .ToList();
-
-        _logger.LogInformation("Mapped {Count} jobs from SerpAPI", jobs.Count);
-        return jobs;
+        _logger.LogInformation("Mapped {Count} jobs from SerpAPI", allJobs.Count);
+        return allJobs;
     }
 
     internal static JobListing MapToJobListing(SerpApiJob serpJob)
@@ -88,6 +104,40 @@ public class JobSearchService : IJobSearchSource
         };
     }
 
+    internal static string NormalizeLocationForSerpApi(string location)
+    {
+        // Strip zip codes (5-digit or 5+4 format)
+        var result = Regex.Replace(location, @"\b\d{5}(-\d{4})?\b", "").Trim();
+
+        // Expand US state abbreviations to full names
+        result = Regex.Replace(result, @"\b([A-Z]{2})\b", match =>
+            StateAbbreviations.TryGetValue(match.Value, out var full) ? full : match.Value);
+
+        // Clean up extra commas/spaces
+        result = Regex.Replace(result, @",\s*,", ",");
+        result = Regex.Replace(result, @",\s*$", "");
+        result = Regex.Replace(result, @"\s{2,}", " ").Trim();
+
+        return result;
+    }
+
+    private static readonly Dictionary<string, string> StateAbbreviations = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["AL"] = "Alabama", ["AK"] = "Alaska", ["AZ"] = "Arizona", ["AR"] = "Arkansas",
+        ["CA"] = "California", ["CO"] = "Colorado", ["CT"] = "Connecticut", ["DE"] = "Delaware",
+        ["FL"] = "Florida", ["GA"] = "Georgia", ["HI"] = "Hawaii", ["ID"] = "Idaho",
+        ["IL"] = "Illinois", ["IN"] = "Indiana", ["IA"] = "Iowa", ["KS"] = "Kansas",
+        ["KY"] = "Kentucky", ["LA"] = "Louisiana", ["ME"] = "Maine", ["MD"] = "Maryland",
+        ["MA"] = "Massachusetts", ["MI"] = "Michigan", ["MN"] = "Minnesota", ["MS"] = "Mississippi",
+        ["MO"] = "Missouri", ["MT"] = "Montana", ["NE"] = "Nebraska", ["NV"] = "Nevada",
+        ["NH"] = "New Hampshire", ["NJ"] = "New Jersey", ["NM"] = "New Mexico", ["NY"] = "New York",
+        ["NC"] = "North Carolina", ["ND"] = "North Dakota", ["OH"] = "Ohio", ["OK"] = "Oklahoma",
+        ["OR"] = "Oregon", ["PA"] = "Pennsylvania", ["RI"] = "Rhode Island", ["SC"] = "South Carolina",
+        ["SD"] = "South Dakota", ["TN"] = "Tennessee", ["TX"] = "Texas", ["UT"] = "Utah",
+        ["VT"] = "Vermont", ["VA"] = "Virginia", ["WA"] = "Washington", ["WV"] = "West Virginia",
+        ["WI"] = "Wisconsin", ["WY"] = "Wyoming", ["DC"] = "District of Columbia",
+    };
+
     internal static DateTime ParseRelativeDate(string? relativeDate)
     {
         if (string.IsNullOrWhiteSpace(relativeDate))
@@ -117,6 +167,14 @@ public class SerpApiResponse
 {
     public List<SerpApiJob>? JobsResults { get; set; }
     public SerpApiSearchMetadata? SearchMetadata { get; set; }
+    [JsonPropertyName("serpapi_pagination")]
+    public SerpApiPagination? SerpApiPagination { get; set; }
+}
+
+public class SerpApiPagination
+{
+    [JsonPropertyName("next_page_token")]
+    public string? NextPageToken { get; set; }
 }
 
 public class SerpApiJob

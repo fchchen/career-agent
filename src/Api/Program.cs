@@ -43,8 +43,8 @@ builder.Services.AddSingleton<IPdfService, PdfService>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddScoped<ICareerAgentService, CareerAgentService>();
 
-// Background service for periodic fetching
-builder.Services.AddHostedService<JobFetchBackgroundService>();
+// Background service for periodic fetching (disabled — run searches manually via UI)
+// builder.Services.AddHostedService<JobFetchBackgroundService>();
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>
