@@ -72,6 +72,9 @@ public class JobSearchService : IJobSearchSource
                 break;
         }
 
+        // Deduplicate by external ID across pages
+        allJobs = allJobs.GroupBy(j => j.ExternalId).Select(g => g.First()).ToList();
+
         _logger.LogInformation("Mapped {Count} jobs from SerpAPI", allJobs.Count);
         return allJobs;
     }

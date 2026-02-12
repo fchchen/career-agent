@@ -35,8 +35,15 @@ public class SqliteStorageService : IStorageService
 
         query = sortBy?.ToLowerInvariant() switch
         {
-            "date" => query.OrderByDescending(j => j.PostedAt),
-            _ => query.OrderByDescending(j => j.RelevanceScore)
+            "score" => query.OrderByDescending(j => j.RelevanceScore)
+                            .ThenByDescending(j => j.IsRemote)
+                            .ThenByDescending(j => j.PostedAt),
+            "date" => query.OrderByDescending(j => j.PostedAt)
+                           .ThenByDescending(j => j.IsRemote)
+                           .ThenByDescending(j => j.RelevanceScore),
+            _ => query.OrderByDescending(j => j.PostedAt)
+                      .ThenByDescending(j => j.IsRemote)
+                      .ThenByDescending(j => j.RelevanceScore)
         };
 
         if (locationFilter is not null)

@@ -72,6 +72,7 @@ import { JobCardComponent } from '../../shared/components/job-card/job-card.comp
           <mat-select [(ngModel)]="postedWithinHours" (selectionChange)="loadJobs()">
             <mat-option [value]="undefined">Any time</mat-option>
             <mat-option [value]="24">Last 24 hours</mat-option>
+            <mat-option [value]="48">Last 48 hours</mat-option>
             <mat-option [value]="72">Last 3 days</mat-option>
             <mat-option [value]="168">Last week</mat-option>
           </mat-select>
@@ -189,8 +190,8 @@ export class JobSearchPage implements OnInit {
   location = '';
   remoteOnly = false;
   statusFilter?: JobStatus;
-  postedWithinHours?: number = 72;
-  sortBy = 'score';
+  postedWithinHours?: number = 48;
+  sortBy = 'date';
   pageSize = 20;
 
   homeAddress = '';

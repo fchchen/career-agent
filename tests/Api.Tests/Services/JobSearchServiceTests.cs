@@ -213,6 +213,202 @@ public class JobSearchServiceTests
         var results = await service.SearchAsync("test", "test");
         results.Should().BeEmpty();
     }
+
+    // ==================== Location Normalization ====================
+
+    [Theory]
+    [InlineData("Rochester Hills, MI 48307", "Rochester Hills, Michigan")]
+    [InlineData("Rochester Hills, MI", "Rochester Hills, Michigan")]
+    [InlineData("New York, NY 10001", "New York, New York")]
+    [InlineData("San Francisco, CA 94102-1234", "San Francisco, California")]
+    [InlineData("Austin, TX", "Austin, Texas")]
+    [InlineData("Washington, DC 20001", "Washington, District of Columbia")]
+    [InlineData("United States", "United States")]
+    public void NormalizeLocationForSerpApi_NormalizesCorrectly(string input, string expected)
+    {
+        var result = JobSearchService.NormalizeLocationForSerpApi(input);
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void NormalizeLocationForSerpApi_StripsZipCode()
+    {
+        var result = JobSearchService.NormalizeLocationForSerpApi("Detroit, MI 48226");
+        result.Should().NotContain("48226");
+        result.Should().Contain("Michigan");
+    }
+
+    [Fact]
+    public void NormalizeLocationForSerpApi_StripsZipPlus4()
+    {
+        var result = JobSearchService.NormalizeLocationForSerpApi("Portland, OR 97201-1234");
+        result.Should().NotContain("97201");
+        result.Should().Contain("Oregon");
+    }
+
+    [Fact]
+    public void NormalizeLocationForSerpApi_PreservesNonAbbreviationText()
+    {
+        var result = JobSearchService.NormalizeLocationForSerpApi("United States");
+        result.Should().Be("United States");
+    }
+
+    // ==================== Pagination ====================
+
+    [Fact]
+    public async Task SearchAsync_PaginatesWithNextPageToken()
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+        };
+
+        var page1 = JsonSerializer.Serialize(new
+        {
+            jobs_results = new[]
+            {
+                new { job_id = "job1", title = "Engineer 1", company_name = "Co1", location = "Remote" }
+            },
+            serpapi_pagination = new { next_page_token = "TOKEN_PAGE_2" }
+        });
+
+        var page2 = JsonSerializer.Serialize(new
+        {
+            jobs_results = new[]
+            {
+                new { job_id = "job2", title = "Engineer 2", company_name = "Co2", location = "Remote" }
+            },
+            serpapi_pagination = new { next_page_token = (string?)null }
+        });
+
+        var handler = new SequentialMockHttpMessageHandler([page1, page2]);
+        var httpClient = new HttpClient(handler);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SerpApi:ApiKey"] = "test-key",
+                ["SerpApi:BaseUrl"] = "https://serpapi.com/search"
+            })
+            .Build();
+
+        var service = new JobSearchService(httpClient, config, NullLogger<JobSearchService>.Instance);
+
+        var results = await service.SearchAsync("Software Engineer", "United States");
+
+        results.Should().HaveCount(2);
+        results[0].Title.Should().Be("Engineer 1");
+        results[1].Title.Should().Be("Engineer 2");
+        handler.RequestCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task SearchAsync_SecondRequestIncludesNextPageToken()
+    {
+        var page1 = JsonSerializer.Serialize(new
+        {
+            jobs_results = new[]
+            {
+                new { job_id = "job1", title = "Engineer 1", company_name = "Co1", location = "Remote" }
+            },
+            serpapi_pagination = new { next_page_token = "MY_TOKEN" }
+        });
+
+        var page2 = JsonSerializer.Serialize(new
+        {
+            jobs_results = new[]
+            {
+                new { job_id = "job2", title = "Engineer 2", company_name = "Co2", location = "Remote" }
+            }
+        });
+
+        var handler = new SequentialMockHttpMessageHandler([page1, page2]);
+        var httpClient = new HttpClient(handler);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SerpApi:ApiKey"] = "test-key",
+                ["SerpApi:BaseUrl"] = "https://serpapi.com/search"
+            })
+            .Build();
+
+        var service = new JobSearchService(httpClient, config, NullLogger<JobSearchService>.Instance);
+
+        await service.SearchAsync("Software Engineer", "United States");
+
+        handler.Requests[0].RequestUri!.ToString().Should().NotContain("next_page_token");
+        handler.Requests[1].RequestUri!.ToString().Should().Contain("next_page_token=MY_TOKEN");
+    }
+
+    [Fact]
+    public async Task SearchAsync_StopsWhenNoNextPageToken()
+    {
+        var page1 = JsonSerializer.Serialize(new
+        {
+            jobs_results = new[]
+            {
+                new { job_id = "job1", title = "Engineer 1", company_name = "Co1", location = "Remote" }
+            }
+            // No serpapi_pagination
+        });
+
+        var handler = new SequentialMockHttpMessageHandler([page1]);
+        var httpClient = new HttpClient(handler);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SerpApi:ApiKey"] = "test-key",
+                ["SerpApi:BaseUrl"] = "https://serpapi.com/search"
+            })
+            .Build();
+
+        var service = new JobSearchService(httpClient, config, NullLogger<JobSearchService>.Instance);
+
+        var results = await service.SearchAsync("Software Engineer", "United States");
+
+        results.Should().HaveCount(1);
+        handler.RequestCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SearchAsync_DeduplicatesAcrossPages()
+    {
+        var page1 = JsonSerializer.Serialize(new
+        {
+            jobs_results = new[]
+            {
+                new { job_id = "same_id", title = "Engineer", company_name = "Co", location = "Remote" }
+            },
+            serpapi_pagination = new { next_page_token = "TOKEN" }
+        });
+
+        var page2 = JsonSerializer.Serialize(new
+        {
+            jobs_results = new[]
+            {
+                new { job_id = "same_id", title = "Engineer", company_name = "Co", location = "Remote" }
+            }
+        });
+
+        var handler = new SequentialMockHttpMessageHandler([page1, page2]);
+        var httpClient = new HttpClient(handler);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SerpApi:ApiKey"] = "test-key",
+                ["SerpApi:BaseUrl"] = "https://serpapi.com/search"
+            })
+            .Build();
+
+        var service = new JobSearchService(httpClient, config, NullLogger<JobSearchService>.Instance);
+
+        var results = await service.SearchAsync("Software Engineer", "United States");
+
+        results.Should().HaveCount(1);
+    }
 }
 
 /// <summary>
@@ -238,6 +434,35 @@ public class MockHttpMessageHandler : HttpMessageHandler
         {
             StatusCode = _statusCode,
             Content = new StringContent(_response, Encoding.UTF8, "application/json")
+        });
+    }
+}
+
+/// <summary>
+/// Mock handler that returns different responses for sequential requests (for pagination tests)
+/// </summary>
+public class SequentialMockHttpMessageHandler : HttpMessageHandler
+{
+    private readonly List<string> _responses;
+    private int _callIndex;
+
+    public List<HttpRequestMessage> Requests { get; } = [];
+    public int RequestCount => Requests.Count;
+
+    public SequentialMockHttpMessageHandler(List<string> responses)
+    {
+        _responses = responses;
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        Requests.Add(request);
+        var response = _callIndex < _responses.Count ? _responses[_callIndex] : "{}";
+        _callIndex++;
+        return Task.FromResult(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(response, Encoding.UTF8, "application/json")
         });
     }
 }
