@@ -51,7 +51,7 @@ Configure your search profile — required/preferred skills, title keywords, neg
 
 ## Tech Stack
 
-- **Backend**: ASP.NET Core 8 Minimal API, EF Core, SQLite
+- **Backend**: ASP.NET Core 8 Minimal API, EF Core (SQLite for local dev, SQL Server/Azure SQL supported for production)
 - **Frontend**: Angular 21, Angular Material
 - **AI**: Google Gemini API (free tier — gemini-2.5-flash, gemini-2.5-flash-lite, gemini-3-flash)
 - **Job Data**: SerpAPI (Google Jobs aggregator), Adzuna API
@@ -104,6 +104,17 @@ Open http://localhost:4200 in your browser.
 dotnet test
 ```
 
+## Deployment
+
+- Azure free-tier deployment guide: `docs/deploy-azure-free-tier.md`
+- Production config uses:
+  - `Database__Provider=SqlServer` and `ConnectionStrings__SqlServer=...` for Azure SQL
+  - SQL Server migrations are maintained via `SqlServerCareerAgentDbContext` in `src/Api/MigrationsSqlServer`
+  - SQL Server tables are namespaced under schema `career` (e.g. `career.JobListings`)
+  - Azure API deploy workflow uses OIDC (`azure/login`) and runs `dotnet ef database update` using `AZURE_SQL_CONNECTION_STRING`
+  - `Cors__AllowedOriginsCsv=...` for frontend origin allowlist
+  - Frontend `API_URL` can be injected at build time (see workflow secret `FRONTEND_API_URL`)
+
 ## Architecture
 
 ```
@@ -111,7 +122,7 @@ src/
   Api/                  ASP.NET Core 8 Minimal API
     Endpoints/          Route handlers (JobSearch, Resume, Dashboard, Profile)
     Services/           Business logic (composite job search, scoring, remote classification)
-    Data/               EF Core DbContext + SQLite
+    Data/               EF Core DbContext (SQLite local, SQL Server/Azure SQL supported)
     Middleware/          Global exception handling
   Shared/               Models, DTOs, constants (SearchProfile, SkillTaxonomy, SearchDefaults)
 frontend/               Angular 21 + Material Design

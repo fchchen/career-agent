@@ -7,7 +7,7 @@ namespace CareerAgent.Api.Data;
 
 public class CareerAgentDbContext : DbContext
 {
-    public CareerAgentDbContext(DbContextOptions<CareerAgentDbContext> options) : base(options) { }
+    public CareerAgentDbContext(DbContextOptions options) : base(options) { }
 
     public DbSet<JobListing> JobListings => Set<JobListing>();
     public DbSet<MasterResume> MasterResumes => Set<MasterResume>();
