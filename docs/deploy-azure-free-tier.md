@@ -94,7 +94,7 @@ Two workflows are included:
 - `.github/workflows/deploy-azure-api.yml`
 - `.github/workflows/deploy-azure-frontend.yml`
 
-Trigger them via push to `main`/`master` or manually via `workflow_dispatch`.
+Trigger them manually via `workflow_dispatch` in GitHub Actions.
 
 `deploy-azure-api.yml` runs `dotnet ef database update` for `SqlServerCareerAgentDbContext`
 before publishing/deploying the API, then deploys with `az webapp deploy`.

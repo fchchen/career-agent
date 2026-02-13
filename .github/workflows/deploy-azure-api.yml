@@ -2,12 +2,6 @@ name: Deploy API (Azure App Service)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, master]
-    paths:
-      - "src/**"
-      - "CareerAgent.sln"
-      - ".github/workflows/deploy-azure-api.yml"
 
 permissions:
   id-token: write
