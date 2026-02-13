@@ -15,7 +15,11 @@ public sealed class SqlServerCareerAgentDbContextFactory : IDesignTimeDbContextF
             connectionString = "Server=localhost;Database=CareerAgentDesignTime;User Id=sa;Password=StrongPassword!123;Encrypt=False;TrustServerCertificate=True";
         }
 
-        optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseSqlServer(connectionString, sql =>
+            sql.EnableRetryOnFailure(
+                maxRetryCount: 10,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null));
         return new SqlServerCareerAgentDbContext(optionsBuilder.Options);
     }
 }

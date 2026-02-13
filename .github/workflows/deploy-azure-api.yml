@@ -45,10 +45,21 @@ jobs:
             echo "AZURE_SQL_CONNECTION_STRING secret is required for migration step."
             exit 1
           fi
-          dotnet ef database update \
+          attempts=0
+          max_attempts=5
+          until dotnet ef database update \
             --context SqlServerCareerAgentDbContext \
             --project src/Api/CareerAgent.Api.csproj \
             --startup-project src/Api/CareerAgent.Api.csproj
+          do
+            attempts=$((attempts + 1))
+            if [ "$attempts" -ge "$max_attempts" ]; then
+              echo "Migration failed after $max_attempts attempts."
+              exit 1
+            fi
+            echo "Migration attempt $attempts failed. Retrying in 20 seconds..."
+            sleep 20
+          done
 
       - name: Publish API
         run: dotnet publish $PROJECT_PATH --configuration Release --output $PUBLISH_PATH
