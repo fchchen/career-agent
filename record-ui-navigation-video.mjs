@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
 
-const baseUrl = process.env.UI_BASE_URL ?? 'https://mango-water-0a9e94f0f.4.azurestaticapps.net';
+const baseUrl = process.env.UI_BASE_URL ?? 'http://127.0.0.1:4200';
 const outputDir = path.resolve('docs/videos');
 const outputFile = path.join(outputDir, 'ui-navigation.webm');
 
