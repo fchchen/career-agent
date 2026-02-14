@@ -44,6 +44,19 @@ try {
   await safeClick(page, 'a:has-text("Jobs")');
   await page.waitForTimeout(1200);
 
+  const queryInput = page.locator('input[placeholder*="Senior Software Engineer"]').first();
+  if (await queryInput.isVisible().catch(() => false)) {
+    await queryInput.fill('software engineer');
+  }
+
+  const locationInput = page.locator('input[placeholder="United States"]').first();
+  if (await locationInput.isVisible().catch(() => false)) {
+    await locationInput.fill('Canada');
+  }
+
+  await safeClick(page, 'button:has-text("Search")');
+  await page.waitForTimeout(4500);
+
   const firstCard = page.locator('app-job-card').first();
   if (await firstCard.isVisible().catch(() => false)) {
     await firstCard.click({ timeout: 5000 });
