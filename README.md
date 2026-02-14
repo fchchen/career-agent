@@ -40,6 +40,7 @@ Configure your search profile — required/preferred skills, title keywords, neg
 - [Open raw video URL](https://raw.githubusercontent.com/fchchen/career-agent/master/docs/videos/ui-navigation.webm)
 
 [![UI Navigation Video Preview](docs/screenshots/dashboard.png)](https://raw.githubusercontent.com/fchchen/career-agent/master/docs/videos/ui-navigation.webm)
+_Demo note: the clip clicks **Search** on the Jobs page to load sample listings before navigation._
 
 ## Features
 
