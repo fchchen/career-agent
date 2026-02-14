@@ -107,6 +107,7 @@ dotnet test
 ## Deployment
 
 - Azure free-tier deployment guide: `docs/deploy-azure-free-tier.md`
+- Operations runbook (no secret values): `docs/ops.md`
 - Production config uses:
   - `Database__Provider=SqlServer` and `ConnectionStrings__SqlServer=...` for Azure SQL
   - SQL Server migrations are maintained via `SqlServerCareerAgentDbContext` in `src/Api/MigrationsSqlServer`
