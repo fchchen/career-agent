@@ -37,7 +37,7 @@ const video = page.video();
 let recordedVideoPath = '';
 
 try {
-  await page.goto(`${baseUrl}/dashboard`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForTimeout(2200);
 
   await safeClick(page, 'a[routerlink="/jobs"]');
