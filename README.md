@@ -34,6 +34,10 @@ Configure your search profile — required/preferred skills, title keywords, neg
 
 ![Settings](docs/screenshots/settings.png)
 
+## UI Navigation Video
+
+- [Watch UI navigation demo](docs/videos/ui-navigation.webm)
+
 ## Features
 
 - **Profile-Driven Personalization** — Configure your skills, title keywords, and search preferences in Settings; all scoring, searching, and background fetch adapt automatically
