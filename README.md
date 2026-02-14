@@ -36,7 +36,10 @@ Configure your search profile — required/preferred skills, title keywords, neg
 
 ## UI Navigation Video
 
-- [Watch UI navigation demo](docs/videos/ui-navigation.webm)
+- [Download/Open UI navigation demo (WebM)](docs/videos/ui-navigation.webm)
+- [Open raw video URL](https://raw.githubusercontent.com/fchchen/career-agent/master/docs/videos/ui-navigation.webm)
+
+[![UI Navigation Video Preview](docs/screenshots/dashboard.png)](https://raw.githubusercontent.com/fchchen/career-agent/master/docs/videos/ui-navigation.webm)
 
 ## Features
 
